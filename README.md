@@ -1,36 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Hotel Booking App
 
-## Getting Started
+A full-stack booking platform for a single hotel with multiple room types.
+Guests can browse rooms, check availability, and pay for their stay online.
 
-First, run the development server:
+**Tech stack:** Next.js (App Router, TypeScript), Tailwind CSS, Prisma 7,
+PostgreSQL (Neon), Auth.js, Stripe Checkout, Zod, Vitest.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+The architecture and roadmap are in [docs/PLAN.md](docs/PLAN.md).
+
+## Local setup
+
+### Prerequisites
+
+- Node.js 20.19+, 22.12+ or 24+ (required by Prisma 7)
+- A PostgreSQL database (for example, a free [Neon](https://neon.tech) project)
+
+### Steps
+
+1. Install dependencies. This also generates the Prisma client.
+
+   ```bash
+   npm install
+   ```
+
+2. Create your local environment file and fill in the values:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable                | Description                                                |
+   | ----------------------- | ---------------------------------------------------------- |
+   | `DATABASE_URL`          | Direct PostgreSQL connection string, used for migrations   |
+   | `DATABASE_URL_POOLED`   | Pooled connection string, used by the app (optional)       |
+   | `AUTH_SECRET`           | Auth.js secret (generate with `npx auth secret`)           |
+   | `STRIPE_SECRET_KEY`     | Stripe secret key (test mode: `sk_test_...`)               |
+   | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (`whsec_...`)                |
+
+3. Start the development server:
+
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000).
+
+## Database (Prisma 7)
+
+The schema is in `prisma/schema.prisma` and the Prisma CLI is configured in
+`prisma7.config.ts`, which loads `.env`. The client is generated into
+`src/generated/prisma` (not committed) and connects through the
+`@prisma/adapter-pg` driver adapter. Import the shared client from
+`src/lib/prisma.ts`:
+
+```ts
+import { prisma } from "@/lib/prisma";
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Command               | What it does                                             |
+| --------------------- | -------------------------------------------------------- |
+| `npm run db:generate` | Regenerate the Prisma client after a schema change       |
+| `npm run db:migrate`  | Create and apply a migration in development              |
+| `npm run db:push`     | Push the schema to the database without a migration      |
+| `npm run db:seed`     | Run `prisma/seed.ts`                                     |
+| `npm run db:studio`   | Open Prisma Studio to browse the data                    |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+The schema has no models yet, so there is nothing to migrate or seed.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Other commands
 
-## Learn More
+| Command         | What it does               |
+| --------------- | -------------------------- |
+| `npm run build` | Production build           |
+| `npm run lint`  | Lint the project           |
 
-To learn more about Next.js, take a look at the following resources:
+## Project structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/app         Routes, layouts, and pages (App Router)
+src/components  Shared React components
+src/lib         Server utilities (e.g. Prisma client)
+prisma/         Prisma schema, migrations, and seed script
+docs/           Project plan
+```
