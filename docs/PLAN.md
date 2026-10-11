@@ -1,9 +1,9 @@
 # Project plan
 
-Hotel booking platform for a single hotel with multiple room types. Guests
-browse rooms, check availability for their dates, pay with Stripe and manage
-their bookings. Staff manage rooms, prices and bookings from an admin
-dashboard.
+A hotel booking marketplace in the style of Airbnb and Booking.com: many
+hotels, each with multiple room types. Guests browse hotels, check
+availability for their dates, pay with Stripe and manage their bookings. A
+single ADMIN role manages every hotel, room type, rate and reservation.
 
 This file is updated at the end of every phase.
 
@@ -12,8 +12,8 @@ This file is updated at the end of every phase.
 | #  | Phase                                 | Status      |
 | -- | ------------------------------------- | ----------- |
 | 1  | Foundation                            | Done        |
-| 2  | Database schema + seed                | Next        |
-| 3  | Design system                         | Not started |
+| 2  | Database schema + seed                | Done        |
+| 3  | Design system                         | Next        |
 | 4  | Auth + roles                          | Not started |
 | 5  | Public browsing                       | Not started |
 | 6  | Availability + pricing engine         | Not started |
@@ -39,12 +39,62 @@ This file is updated at the end of every phase.
   `DATABASE_URL_POOLED` and falls back to `DATABASE_URL`.
 - **Mutations:** Server Actions. Every input is validated with Zod and every
   action checks authorisation on the server.
-- **Auth:** Auth.js (NextAuth) with two roles, guest and admin.
+- **Auth:** Auth.js (NextAuth) with two roles, GUEST and ADMIN. Passwords are
+  hashed with bcrypt (`src/lib/password.ts`).
 - **Payments:** Stripe Checkout. A webhook route handler confirms payment and
   is the only place a booking becomes paid.
-- **Data rules:** money is stored as integer cents; check-in and check-out are
-  stored as `@db.Date`.
+- **Images:** hotel and room photos are remote URLs (Unsplash in the demo
+  data), rendered with `next/image`.
 - **Tests:** Vitest, focused on the availability and pricing logic.
+
+## Data model
+
+The schema is in `prisma/schema.prisma`.
+
+| Area         | Models                                              |
+| ------------ | --------------------------------------------------- |
+| Users, auth  | `User`, `Account`, `Session`, `VerificationToken`   |
+| Catalogue    | `Hotel`, `HotelImage`, `RoomType`, `RoomImage`, `Amenity` |
+| Pricing      | `RateOverride`, `AvailabilityBlock`                 |
+| Bookings     | `Booking`, `Payment`                                |
+| Social       | `Review`, `Wishlist`                                |
+
+Rules the rest of the app relies on:
+
+- **Money** is an integer in the smallest currency unit (cents). The platform
+  sells in one currency, USD; `Booking` and `Payment` record it.
+- **Stay dates** are calendar dates (`@db.Date`) and `checkOut` is exclusive:
+  a stay from the 10th to the 12th occupies the nights of the 10th and 11th.
+- **Inventory** is per room type: `RoomType.totalInventory` identical rooms
+  can be sold each night. A night's availability is that number, minus
+  `AvailabilityBlock.roomsBlocked`, minus the rooms held by bookings that
+  overlap the night and are `CONFIRMED`, `CHECKED_IN`, or `PENDING` and not
+  yet past `expiresAt`.
+- **Price** for a night is `RateOverride.price` when a row exists for that
+  room type and date, otherwise `RoomType.basePrice`.
+- **Holds:** a new booking is `PENDING` with an `expiresAt`. Payment makes it
+  `CONFIRMED`; a hold that lapses becomes `EXPIRED`.
+- **Reviews:** one per booking, so only guests who stayed can review.
+- **Deletes:** bookings and payments are financial records. A user or room
+  type with bookings cannot be deleted; hotels and room types are hidden with
+  `isActive` instead.
+- **Value ranges** (ratings 1-5, `checkOut > checkIn`, non-negative prices and
+  counts) are CHECK constraints in the init migration, because the Prisma
+  schema cannot express them. Zod still validates all input first.
+
+## Demo data
+
+`npm run db:seed` replaces the catalogue, bookings, reviews and wishlists
+with a demo set and upserts the demo users. It refuses to run when
+`NODE_ENV` is `production`.
+
+- 1 admin (from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`) and 3 guests.
+- 9 fictional hotels: beach (Maldives, Santorini, Bali), city (Karachi,
+  Tokyo, Istanbul), mountain (Hunza, Dolomites) and desert (Dubai), with 31
+  room types and 39 amenities.
+- Weekend (+20%) and holiday-season (+35% city, +50% elsewhere) rate
+  overrides for the next 120 nights.
+- 56 bookings covering every status, and 45 reviews.
 
 ## Folder conventions
 
@@ -53,7 +103,7 @@ src/app            Routes, layouts, pages, route handlers
 src/components     Shared React components
 src/lib            Server utilities, validation schemas, domain logic
 src/generated      Generated Prisma client (not committed)
-prisma/            schema.prisma, migrations, seed.ts
+prisma/            schema.prisma, migrations, seed.ts, seed-data/
 prisma7.config.ts  Prisma CLI configuration
 docs/              PLAN.md, DESIGN.md
 ```
@@ -68,15 +118,18 @@ lists every variable the app needs.
 
 - Next.js starter content removed; placeholder home page.
 - Prisma 7.10.0 (`prisma`, `@prisma/client`, `@prisma/adapter-pg`) with
-  `prisma7.config.ts`, an empty schema and a generated client.
+  `prisma7.config.ts` and a generated client.
 - Prisma client singleton in `src/lib/prisma.ts`.
 - `db:*` npm scripts; `prisma generate` runs on `npm install`.
 - `.env.example`, README setup steps, this plan.
 
-### 2. Database schema + seed
+### 2. Database schema + seed (done)
 
-Models for users, room types, rooms, bookings and payments; the first
-migration; realistic seed data.
+- 15 models and the `init` migration, with indexes for availability lookups,
+  booking status, hotel city and wishlists.
+- Password hashing helper in `src/lib/password.ts`.
+- Demo data seed in `prisma/seed.ts` and `prisma/seed-data/`.
+- `images.unsplash.com` allowed as a remote image host.
 
 ### 3. Design system
 
@@ -85,30 +138,31 @@ base components (button, input, card, skeleton, empty and error states).
 
 ### 4. Auth + roles
 
-Sign up, sign in and sign out with Auth.js; guest and admin roles; protected
+Sign up, sign in and sign out with Auth.js; GUEST and ADMIN roles; protected
 routes and server-side authorisation helpers.
 
 ### 5. Public browsing
 
-Home page, room type listing and room type detail pages.
+Home page, destination and hotel search, hotel detail and room type pages,
+wishlists.
 
 ### 6. Availability + pricing engine
 
 Date-range availability that prevents double bookings, and price calculation
-per stay. Covered by unit tests.
+per stay from base prices and rate overrides. Covered by unit tests.
 
 ### 7. Booking + Stripe payments
 
-Booking flow, Stripe Checkout session, webhook confirmation, and handling of
-abandoned or failed payments.
+Booking flow with a timed hold, Stripe Checkout session, webhook
+confirmation, and handling of abandoned or failed payments.
 
 ### 8. Guest account
 
-Upcoming and past bookings, booking detail, cancellation.
+Upcoming and past bookings, booking detail, cancellation, reviews.
 
 ### 9. Admin dashboard
 
-Manage room types, rooms, prices and bookings.
+Manage hotels, room types, rates, availability blocks and reservations.
 
 ### 10. Production readiness + tests + deploy
 

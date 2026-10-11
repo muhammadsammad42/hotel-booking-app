@@ -1,7 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Conventions
+// - Money is an integer in the smallest currency unit (cents for USD).
+// - Stay dates are calendar dates (@db.Date). checkOut is exclusive: a stay
+//   from the 10th to the 12th occupies the nights of the 10th and 11th.
+// - Value ranges (ratings 1-5, checkOut > checkIn, non-negative prices and
+//   counts) are enforced by CHECK constraints added in the init migration.
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +12,325 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  GUEST
+  ADMIN
+}
+
+enum AmenityCategory {
+  GENERAL
+  WELLNESS
+  DINING
+  ROOM
+  BATHROOM
+  ENTERTAINMENT
+  SERVICES
+  OUTDOORS
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  EXPIRED
+  CHECKED_IN
+  CHECKED_OUT
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+// ---------------------------------------------------------------------------
+// Users and Auth.js
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  // Null for users who only sign in with an OAuth provider.
+  passwordHash  String?
+  role          Role      @default(GUEST)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts  Account[]
+  sessions  Session[]
+  bookings  Booking[]
+  reviews   Review[]
+  wishlist  Wishlist[]
+}
+
+// Account, Session and VerificationToken follow the schema required by the
+// Auth.js Prisma adapter, including its snake_case token field names.
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@id([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Catalogue
+// ---------------------------------------------------------------------------
+
+model Hotel {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  description   String
+  city          String
+  country       String
+  address       String
+  latitude      Float
+  longitude     Float
+  starRating    Int
+  // Local time of day as "HH:mm", e.g. "15:00".
+  checkInTime   String   @db.VarChar(5)
+  checkOutTime  String   @db.VarChar(5)
+  coverImageUrl String
+  coverImageAlt String
+  isFeatured    Boolean  @default(false)
+  // Inactive hotels are hidden from guests but keep their booking history.
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  roomTypes  RoomType[]
+  images     HotelImage[]
+  amenities  Amenity[]
+  reviews    Review[]
+  wishlisted Wishlist[]
+
+  @@index([city])
+  @@index([country])
+  @@index([isActive, isFeatured])
+}
+
+model HotelImage {
+  id        String @id @default(cuid())
+  hotelId   String
+  url       String
+  alt       String
+  sortOrder Int    @default(0)
+
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId, sortOrder])
+}
+
+model RoomType {
+  id             String   @id @default(cuid())
+  hotelId        String
+  name           String
+  slug           String
+  description    String
+  maxGuests      Int
+  // Human-readable bed configuration, e.g. "1 king bed".
+  beds           String
+  sizeSqm        Int
+  // Default nightly price; RateOverride replaces it for specific dates.
+  basePrice      Int
+  // Number of identical rooms of this type that can be sold per night.
+  totalInventory Int
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  hotel              Hotel               @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  images             RoomImage[]
+  amenities          Amenity[]
+  rateOverrides      RateOverride[]
+  availabilityBlocks AvailabilityBlock[]
+  bookings           Booking[]
+
+  @@unique([hotelId, slug])
+}
+
+model RoomImage {
+  id         String @id @default(cuid())
+  roomTypeId String
+  url        String
+  alt        String
+  sortOrder  Int    @default(0)
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@index([roomTypeId, sortOrder])
+}
+
+model Amenity {
+  id       String          @id @default(cuid())
+  name     String          @unique
+  // Key of the icon to render, resolved by the UI.
+  iconKey  String
+  category AmenityCategory
+
+  hotels    Hotel[]
+  roomTypes RoomType[]
+}
+
+// ---------------------------------------------------------------------------
+// Pricing and availability
+// ---------------------------------------------------------------------------
+
+// Nightly price for one room type on one date, replacing RoomType.basePrice.
+model RateOverride {
+  id         String   @id @default(cuid())
+  roomTypeId String
+  date       DateTime @db.Date
+  price      Int
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([roomTypeId, date])
+}
+
+// Rooms taken out of sale on one date (maintenance, owner holds).
+model AvailabilityBlock {
+  id           String   @id @default(cuid())
+  roomTypeId   String
+  date         DateTime @db.Date
+  roomsBlocked Int
+  reason       String?
+
+  roomType RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([roomTypeId, date])
+}
+
+// ---------------------------------------------------------------------------
+// Bookings and payments
+// ---------------------------------------------------------------------------
+
+model Booking {
+  id              String        @id @default(cuid())
+  // Human-friendly reference shown to guests, e.g. "HB-7K3M9Q".
+  reference       String        @unique
+  userId          String
+  roomTypeId      String
+  checkIn         DateTime      @db.Date
+  checkOut        DateTime      @db.Date
+  guests          Int
+  rooms           Int           @default(1)
+  totalPrice      Int
+  currency        String        @default("USD") @db.Char(3)
+  status          BookingStatus @default(PENDING)
+  // A PENDING booking holds its rooms until this time, then counts as EXPIRED.
+  expiresAt       DateTime?
+  guestName       String
+  guestEmail      String
+  guestPhone      String?
+  specialRequests String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Restrict: bookings are financial records and outlive account or
+  // catalogue changes.
+  user     User      @relation(fields: [userId], references: [id], onDelete: Restrict)
+  roomType RoomType  @relation(fields: [roomTypeId], references: [id], onDelete: Restrict)
+  payments Payment[]
+  review   Review?
+
+  @@index([roomTypeId, checkIn, checkOut])
+  @@index([status, expiresAt])
+  @@index([userId, createdAt])
+}
+
+model Payment {
+  id                      String        @id @default(cuid())
+  bookingId               String
+  stripeCheckoutSessionId String?       @unique
+  stripePaymentIntentId   String?       @unique
+  amount                  Int
+  currency                String        @default("USD") @db.Char(3)
+  status                  PaymentStatus @default(PENDING)
+  paidAt                  DateTime?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
+
+  @@index([bookingId])
+}
+
+// ---------------------------------------------------------------------------
+// Reviews and wishlists
+// ---------------------------------------------------------------------------
+
+// One review per completed booking. All ratings are 1-5.
+model Review {
+  id          String   @id @default(cuid())
+  userId      String
+  hotelId     String
+  bookingId   String   @unique
+  rating      Int
+  cleanliness Int
+  location    Int
+  value       Int
+  service     Int
+  comment     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel   Hotel   @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([hotelId, createdAt])
+  @@index([userId])
+}
+
+model Wishlist {
+  userId    String
+  hotelId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hotel Hotel @relation(fields: [hotelId], references: [id], onDelete: Cascade)
+
+  @@id([userId, hotelId])
+  @@index([hotelId])
 }

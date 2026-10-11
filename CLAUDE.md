@@ -1,6 +1,8 @@
 # Hotel Booking App
 
-Full stack hotel booking platform (single hotel, multiple room types).
+Full stack hotel booking marketplace (Airbnb/Booking.com style): many hotels,
+each with multiple room types. Guests browse, book and pay. A single ADMIN
+role manages all hotels, rooms, rates and reservations.
 See docs/PLAN.md for the architecture, folder conventions and phase plan.
 
 ## Tech stack

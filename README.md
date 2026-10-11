@@ -1,7 +1,9 @@
 # Hotel Booking App
 
-A full-stack booking platform for a single hotel with multiple room types.
-Guests can browse rooms, check availability, and pay for their stay online.
+A full-stack hotel booking marketplace in the style of Airbnb and
+Booking.com. Guests browse hotels around the world, check availability for
+their dates, and pay for their stay online. An admin manages every hotel,
+room type, rate and reservation.
 
 **Tech stack:** Next.js (App Router, TypeScript), Tailwind CSS, Prisma 7,
 PostgreSQL (Neon), Auth.js, Stripe Checkout, Zod, Vitest.
@@ -33,11 +35,24 @@ The architecture and roadmap are in [docs/PLAN.md](docs/PLAN.md).
    | ----------------------- | ---------------------------------------------------------- |
    | `DATABASE_URL`          | Direct PostgreSQL connection string, used for migrations   |
    | `DATABASE_URL_POOLED`   | Pooled connection string, used by the app (optional)       |
+   | `SEED_ADMIN_EMAIL`      | Email of the admin account created by the seed             |
+   | `SEED_ADMIN_PASSWORD`   | Password of that admin account (at least 8 characters)     |
+   | `SEED_GUEST_PASSWORD`   | Password for the three demo guests (optional)              |
    | `AUTH_SECRET`           | Auth.js secret (generate with `npx auth secret`)           |
    | `STRIPE_SECRET_KEY`     | Stripe secret key (test mode: `sk_test_...`)               |
    | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (`whsec_...`)                |
 
-3. Start the development server:
+3. Create the database tables and load the demo data:
+
+   ```bash
+   npx prisma migrate deploy
+   npm run db:seed
+   ```
+
+   The seed takes a minute or two. It replaces all hotels, bookings and
+   reviews with the demo set, so do not run it against real data.
+
+4. Start the development server:
 
    ```bash
    npm run dev
@@ -62,10 +77,23 @@ import { prisma } from "@/lib/prisma";
 | `npm run db:generate` | Regenerate the Prisma client after a schema change       |
 | `npm run db:migrate`  | Create and apply a migration in development              |
 | `npm run db:push`     | Push the schema to the database without a migration      |
-| `npm run db:seed`     | Run `prisma/seed.ts`                                     |
+| `npm run db:seed`     | Reset the demo data (`prisma/seed.ts`)                   |
 | `npm run db:studio`   | Open Prisma Studio to browse the data                    |
 
-The schema has no models yet, so there is nothing to migrate or seed.
+Use `npm run db:migrate` when you change the schema; it creates a new
+migration. Use `npx prisma migrate deploy` to apply existing migrations to a
+fresh database.
+
+### Demo data
+
+The seed creates one admin, three guests (`ayesha.khan@example.com`,
+`daniel.meyer@example.com`, `sofia.rossi@example.com`) and nine fictional
+hotels across beach, city, mountain and desert destinations, with room types,
+amenities, weekend and holiday rates for the next 120 nights, bookings in
+every status, and reviews. Photos are from [Unsplash](https://unsplash.com).
+
+The data model and its rules are described in
+[docs/PLAN.md](docs/PLAN.md#data-model).
 
 ## Other commands
 
