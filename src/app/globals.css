@@ -1,26 +1,292 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+/* Sarai design tokens. docs/DESIGN.md explains when to use each one. */
+
+/* `.dark` on <html> switches the theme. `.light` forces the light theme on a
+   subtree, which the /design page uses to show both themes side by side. */
+@custom-variant dark (&:where(.dark, .dark *):not(:where(.light, .light *)));
 
 @theme inline {
+  /* Colour: every utility reads a CSS variable, so themes swap at runtime. */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-brass: var(--brass);
+  --color-brass-foreground: var(--brass-foreground);
+  --color-star: var(--star);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-scrim: var(--scrim);
+  /* The photo lightbox is dark in both themes, like a cinema. */
+  --color-lightbox: #0f0c0a;
+  --color-lightbox-foreground: #f3ece2;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+  /* Type: Fraunces for editorial display, Instrument Sans for everything else. */
+  --font-sans: var(--font-instrument-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-heading: var(--font-sans);
+  --font-mono: ui-monospace, "SF Mono", "Cascadia Mono", Menlo, monospace;
+
+  /* Radius: small, quiet corners. */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.625rem;
+  --radius-2xl: 0.875rem;
+  --radius-3xl: 1.25rem;
+  --radius-4xl: 9999px;
+
+  /* Shadow: hairline borders do most of the work; shadows are warm and rare. */
+  --shadow-xs: 0 1px 2px 0 rgb(63 38 20 / 0.06);
+  --shadow-lift: 0 14px 32px -14px rgb(63 38 20 / 0.28), 0 2px 6px -2px rgb(63 38 20 / 0.08);
+  --shadow-overlay: 0 24px 60px -20px rgb(31 26 23 / 0.4), 0 4px 12px -4px rgb(31 26 23 / 0.14);
+  --shadow-cta: 0 10px 22px -10px rgb(180 83 42 / 0.7), 0 1px 2px 0 rgb(63 38 20 / 0.12);
+
+  /* Spacing and layout. */
+  --spacing-gutter: clamp(1rem, 4vw, 2.5rem);
+  --spacing-section: clamp(4rem, 9vw, 7.5rem);
+  --spacing-section-compact: clamp(2rem, 4vw, 3rem);
+  --spacing-header: 4.5rem;
+  --container-page: 80rem;
+  --container-app: 64rem;
+  --container-prose: 42rem;
+
+  /* Motion. Feedback is 150-250ms; decorative reveals are 400-600ms. */
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-shimmer: shimmer 1.8s ease-in-out infinite;
+
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+:root,
+.light {
+  color-scheme: light;
+
+  --background: #faf6ef; /* ivory */
+  --foreground: #1f1a17; /* ink */
+  --card: #fffcf7;
+  --card-foreground: #1f1a17;
+  --popover: #fffcf7;
+  --popover-foreground: #1f1a17;
+  --primary: #b4532a; /* terracotta */
+  --primary-hover: #9a4421;
+  --primary-foreground: #fffaf5;
+  --secondary: #3f4a3c; /* olive */
+  --secondary-foreground: #f6f1e7;
+  --muted: #efe6d8; /* sand */
+  --muted-foreground: #665a50;
+  --accent: #f3ebdf;
+  --accent-foreground: #1f1a17;
+  --brass: #c29a5b;
+  --brass-foreground: #1f1a17;
+  --star: #b9791f;
+  --success: #356348;
+  --success-foreground: #f4faf6;
+  --warning: #8f5a0c;
+  --warning-foreground: #fff9ee;
+  --destructive: #a8322d;
+  --destructive-foreground: #fff8f5;
+  --border: #e2d6c4;
+  --input: #96846f;
+  --ring: #b4532a;
+  --scrim: rgb(31 26 23 / 0.55);
+}
+
+.dark {
+  color-scheme: dark;
+
+  --background: #171311; /* espresso */
+  --foreground: #f3ece2;
+  --card: #211b17;
+  --card-foreground: #f3ece2;
+  --popover: #261f1a;
+  --popover-foreground: #f3ece2;
+  --primary: #d97b4f;
+  --primary-hover: #e48d63;
+  --primary-foreground: #1c0f08;
+  --secondary: #4a5746;
+  --secondary-foreground: #f3ece2;
+  --muted: #2a231e;
+  --muted-foreground: #b5a898;
+  --accent: #2f2721;
+  --accent-foreground: #f3ece2;
+  --brass: #d2ae74;
+  --brass-foreground: #1f1a17;
+  --star: #e0a84e;
+  --success: #82b594;
+  --success-foreground: #0f1f15;
+  --warning: #dba74a;
+  --warning-foreground: #221703;
+  --destructive: #e5766b;
+  --destructive-foreground: #230a07;
+  --border: #3a302a;
+  --input: #7d6f62;
+  --ring: #d97b4f;
+  --scrim: rgb(0 0 0 / 0.65);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply font-sans;
+    scroll-padding-top: calc(var(--spacing-header) + 1rem);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--brass) 45%, transparent);
+  }
+
+  /* One visible focus style everywhere; components may add a ring on top. */
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Type scale.
+   Display styles (serif) are for editorial pages: home, search, hotel pages.
+   Title styles (sans) are for the booking flow, account and admin. */
+@utility type-display-2xl {
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 1.6rem + 5.2vw, 4.75rem);
+  line-height: 1.02;
+  letter-spacing: -0.025em;
+  font-weight: 400;
+  font-variation-settings: "SOFT" 50, "WONK" 0;
+  text-wrap: balance;
+}
+
+@utility type-display-xl {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 1.5rem + 3.4vw, 3.5rem);
+  line-height: 1.06;
+  letter-spacing: -0.02em;
+  font-weight: 400;
+  font-variation-settings: "SOFT" 50, "WONK" 0;
+  text-wrap: balance;
+}
+
+@utility type-display-lg {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 1.35rem + 1.8vw, 2.5rem);
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  font-weight: 400;
+  font-variation-settings: "SOFT" 50, "WONK" 0;
+  text-wrap: balance;
+}
+
+@utility type-display-md {
+  font-family: var(--font-display);
+  font-size: clamp(1.375rem, 1.25rem + 0.6vw, 1.75rem);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  font-weight: 500;
+  font-variation-settings: "SOFT" 50, "WONK" 0;
+}
+
+@utility type-display-sm {
+  font-family: var(--font-display);
+  font-size: 1.1875rem;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+  font-weight: 500;
+  font-variation-settings: "SOFT" 50, "WONK" 0;
+}
+
+@utility type-title-lg {
+  font-family: var(--font-sans);
+  font-size: 1.5rem;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+}
+
+@utility type-title-md {
+  font-family: var(--font-sans);
+  font-size: 1.1875rem;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  font-weight: 600;
+}
+
+@utility type-title-sm {
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+@utility type-lead {
+  font-size: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+  line-height: 1.65;
+}
+
+@utility type-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+/* Loading placeholder with a slow warm sweep. */
+@utility skeleton-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    var(--muted) 30%,
+    color-mix(in oklab, var(--muted) 55%, var(--card)) 50%,
+    var(--muted) 70%
+  );
+  background-size: 200% 100%;
+  animation: var(--animate-shimmer);
 }

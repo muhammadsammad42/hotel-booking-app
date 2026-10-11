@@ -13,8 +13,8 @@ This file is updated at the end of every phase.
 | -- | ------------------------------------- | ----------- |
 | 1  | Foundation                            | Done        |
 | 2  | Database schema + seed                | Done        |
-| 3  | Design system                         | Next        |
-| 4  | Auth + roles                          | Not started |
+| 3  | Design system                         | Done        |
+| 4  | Auth + roles                          | Next        |
 | 5  | Public browsing                       | Not started |
 | 6  | Availability + pricing engine         | Not started |
 | 7  | Booking + Stripe payments             | Not started |
@@ -28,8 +28,13 @@ This file is updated at the end of every phase.
 - **Framework:** Next.js 16 App Router with TypeScript. Server Components by
   default; a Client Component only where interactivity needs it.
 - **Styling:** Tailwind CSS 4 with theme tokens defined in
-  `src/app/globals.css`. The design system is documented in `docs/DESIGN.md`
-  (written in phase 3).
+  `src/app/globals.css`, light and dark themes, and Radix-based components
+  from shadcn/ui restyled for the brand. The design system is documented in
+  `docs/DESIGN.md` and shown live at `/design`.
+- **Brand:** the app is called Sarai. Editorial pages (home, search, hotel
+  pages) use the serif display type and generous spacing; the booking flow,
+  account and admin use the sans type, tighter spacing and one clear primary
+  action.
 - **Data:** PostgreSQL on Neon through Prisma 7. The client is generated into
   `src/generated/prisma` and connects with the `@prisma/adapter-pg` driver
   adapter. All database access goes through the singleton in
@@ -44,7 +49,9 @@ This file is updated at the end of every phase.
 - **Payments:** Stripe Checkout. A webhook route handler confirms payment and
   is the only place a booking becomes paid.
 - **Images:** hotel and room photos are remote URLs (Unsplash in the demo
-  data), rendered with `next/image`.
+  data), rendered with `next/image`. A custom loader
+  (`src/lib/image-loader.ts`) has the Unsplash CDN resize them, so they do not
+  pass through the Next.js image optimizer.
 - **Tests:** Vitest, focused on the availability and pricing logic.
 
 ## Data model
@@ -103,7 +110,12 @@ with a demo set and upserts the demo users. It refuses to run when
 ```
 src/app            Routes, layouts, pages, route handlers
 src/components     Shared React components
-src/lib            Server utilities, validation schemas, domain logic
+  ui/              Building blocks (buttons, inputs, dialogs...)
+  layout/          Header, footer, page container
+  brand/           Logo
+  motion/          Animation helpers
+  design/          Demos used only by the /design page
+src/lib            Utilities, hooks, validation schemas, domain logic
 src/generated      Generated Prisma client (not committed)
 prisma/            schema.prisma, migrations, seed.ts, seed-data/
 prisma7.config.ts  Prisma CLI configuration
@@ -131,12 +143,20 @@ lists every variable the app needs.
   booking status, hotel city and wishlists.
 - Password hashing helper in `src/lib/password.ts`.
 - Demo data seed in `prisma/seed.ts` and `prisma/seed-data/`.
-- `images.unsplash.com` allowed as a remote image host.
+- Unsplash photos used for the demo catalogue.
 
-### 3. Design system
+### 3. Design system (done)
 
-`docs/DESIGN.md`, theme tokens for light and dark mode, typography, and the
-base components (button, input, card, skeleton, empty and error states).
+- Brand: the name Sarai, the archway logo, wordmark and favicon.
+- Theme tokens for colour, type, radius, shadow, spacing and motion, in
+  light and dark, with a theme toggle.
+- Components: button, field, input, textarea, select, checkbox, badge, card,
+  rating stars, price tag, skeletons, empty state, dialog, sheet, popover,
+  tooltip, tabs, avatar, stepper, toasts, date range picker, and an image
+  gallery with a fullscreen lightbox.
+- App shell: header that turns solid on scroll, mobile menu, footer, skip
+  link, and a not-found page.
+- `/design` review page and `docs/DESIGN.md`.
 
 ### 4. Auth + roles
 

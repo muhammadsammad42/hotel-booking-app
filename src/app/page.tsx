@@ -1,15 +1,44 @@
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowRightIcon } from "lucide-react";
+
+import { PageContainer, Section } from "@/components/layout/page-container";
+import { Button } from "@/components/ui/button";
+
+// Placeholder until the public browsing phase builds the real home page.
 export default function Home() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center">
-      <h1 className="text-4xl font-semibold tracking-tight sm:text-5xl">
-        Hotel Booking App
-      </h1>
-      <p className="mt-4 max-w-md text-lg text-zinc-600 dark:text-zinc-400">
-        Browse room types, check availability, and book your stay.
-      </p>
-      <p className="mt-8 rounded-full border border-zinc-200 px-4 py-1.5 text-sm text-zinc-500 dark:border-zinc-800">
-        Coming soon
-      </p>
-    </main>
+    <Section>
+      <PageContainer className="grid items-center gap-12 lg:grid-cols-[1.1fr_1fr] lg:gap-20">
+        <div>
+          <p className="type-eyebrow text-primary">Opening soon</p>
+          <h1 className="type-display-2xl mt-5">
+            Stays worth <em className="font-normal">the journey.</em>
+          </h1>
+          <p className="type-lead mt-6 max-w-xl text-muted-foreground">
+            Sarai is a collection of remarkable hotels, from overwater villas in the Maldives to a stone lodge
+            above the Hunza Valley. Search and booking are on their way.
+          </p>
+          <div className="mt-9 flex flex-wrap gap-3">
+            <Button asChild size="lg">
+              <Link href="/design">
+                See the design system
+                <ArrowRightIcon aria-hidden />
+              </Link>
+            </Button>
+          </div>
+        </div>
+        <div className="relative aspect-4/5 overflow-hidden rounded-2xl bg-muted lg:max-h-[38rem]">
+          <Image
+            src="https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1600&q=80"
+            alt="Whitewashed cliffside village above the sea at dusk"
+            fill
+            priority
+            sizes="(min-width: 1024px) 45vw, 100vw"
+            className="object-cover"
+          />
+        </div>
+      </PageContainer>
+    </Section>
   );
 }

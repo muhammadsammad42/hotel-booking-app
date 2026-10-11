@@ -1,4 +1,4 @@
-# Hotel Booking App
+# Sarai (hotel booking app)
 
 Full stack hotel booking marketplace (Airbnb/Booking.com style): many hotels,
 each with multiple room types. Guests browse, book and pay. A single ADMIN
@@ -6,8 +6,9 @@ role manages all hotels, rooms, rates and reservations.
 See docs/PLAN.md for the architecture, folder conventions and phase plan.
 
 ## Tech stack
-Next.js (App Router, TypeScript), Tailwind CSS, Prisma 7, PostgreSQL (Neon),
-Auth.js (NextAuth), Stripe Checkout, Zod, Vitest.
+Next.js (App Router, TypeScript), Tailwind CSS, shadcn/ui (Radix), Motion,
+lucide-react, sonner, Prisma 7, PostgreSQL (Neon), Auth.js (NextAuth),
+Stripe Checkout, Zod, Vitest.
 
 ## Rules
 - Use Server Components by default; Client Components only when needed.

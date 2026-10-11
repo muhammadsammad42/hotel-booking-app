@@ -1,14 +1,17 @@
-# Hotel Booking App
+# Sarai
 
-A full-stack hotel booking marketplace in the style of Airbnb and
+Sarai is a full-stack hotel booking marketplace in the style of Airbnb and
 Booking.com. Guests browse hotels around the world, check availability for
 their dates, and pay for their stay online. An admin manages every hotel,
 room type, rate and reservation.
 
-**Tech stack:** Next.js (App Router, TypeScript), Tailwind CSS, Prisma 7,
-PostgreSQL (Neon), Auth.js, Stripe Checkout, Zod, Vitest.
+**Tech stack:** Next.js (App Router, TypeScript), Tailwind CSS, shadcn/ui
+(Radix), Motion, Prisma 7, PostgreSQL (Neon), Auth.js, Stripe Checkout, Zod,
+Vitest.
 
-The architecture and roadmap are in [docs/PLAN.md](docs/PLAN.md).
+The architecture and roadmap are in [docs/PLAN.md](docs/PLAN.md). The design
+system is documented in [docs/DESIGN.md](docs/DESIGN.md) and shown live at
+`/design` when the app is running.
 
 ## Local setup
 
@@ -106,8 +109,8 @@ The data model and its rules are described in
 
 ```
 src/app         Routes, layouts, and pages (App Router)
-src/components  Shared React components
-src/lib         Server utilities (e.g. Prisma client)
+src/components  Shared React components (ui, layout, brand)
+src/lib         Utilities, hooks and the Prisma client
 prisma/         Prisma schema, migrations, and seed script
-docs/           Project plan
+docs/           Project plan and design system
 ```

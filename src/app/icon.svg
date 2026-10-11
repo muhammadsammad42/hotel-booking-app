@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Sarai">
+  <rect width="32" height="32" rx="7" fill="#B4532A"/>
+  <path d="M8.5 25.5V15.2c0-4.6 3.2-7.3 7.5-10.2 4.3 2.9 7.5 5.6 7.5 10.2v10.3" fill="none" stroke="#FAF6EF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12.8 25.5v-7.6c0-2.3 1.4-3.8 3.2-5.3 1.8 1.5 3.2 3 3.2 5.3v7.6z" fill="#FAF6EF"/>
+  <path d="M6 25.5h20" fill="none" stroke="#FAF6EF" stroke-width="2.2" stroke-linecap="round"/>
+</svg>
