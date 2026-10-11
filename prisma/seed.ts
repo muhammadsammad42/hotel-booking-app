@@ -136,14 +136,28 @@ async function seedUsers() {
     },
   });
 
-  // Guests can only sign in with a password when SEED_GUEST_PASSWORD is set.
+  // Every guest shares one password. Without SEED_GUEST_PASSWORD they are
+  // created without a password and cannot sign in.
   const guestPassword = process.env.SEED_GUEST_PASSWORD;
+  if (guestPassword && guestPassword.length < 8) {
+    throw new Error("SEED_GUEST_PASSWORD must be at least 8 characters.");
+  }
   const guestHash = guestPassword ? await hashPassword(guestPassword) : null;
 
+  // The first three guests also own the current and upcoming bookings.
   const guestProfiles = [
     { name: "Ayesha Khan", email: "ayesha.khan@example.com", phone: "+92 300 5550101" },
     { name: "Daniel Meyer", email: "daniel.meyer@example.com", phone: "+49 151 5550102" },
     { name: "Sofia Rossi", email: "sofia.rossi@example.com", phone: "+39 320 5550103" },
+    { name: "Hamza Malik", email: "hamza.malik@example.com", phone: "+92 321 5550104" },
+    { name: "Emily Carter", email: "emily.carter@example.com", phone: "+44 7700 555105" },
+    { name: "Kenji Tanaka", email: "kenji.tanaka@example.com", phone: "+81 90 5550 0106" },
+    { name: "Fatima Al-Sayed", email: "fatima.alsayed@example.com", phone: "+971 50 555 0107" },
+    { name: "Lucas Oliveira", email: "lucas.oliveira@example.com", phone: "+55 11 95555 0108" },
+    { name: "Priya Nair", email: "priya.nair@example.com", phone: "+91 98 5550 0109" },
+    { name: "Olivia Bennett", email: "olivia.bennett@example.com", phone: "+61 412 555 110" },
+    { name: "Mehmet Yıldız", email: "mehmet.yildiz@example.com", phone: "+90 532 555 0111" },
+    { name: "Chloé Dubois", email: "chloe.dubois@example.com", phone: "+33 6 55 55 01 12" },
   ];
 
   const guests = [];
@@ -371,15 +385,19 @@ async function seedBookings(
   const [ayesha, daniel, sofia] = guests;
   const bookings: BookingInput[] = [];
 
-  // Completed stays over the past year, each with a review.
+  // Completed stays over the past year, each with a review. Reviewers are
+  // taken in sequence, so a hotel's reviews all come from different guests.
   catalogue.forEach(({ seed, record }, hotelIndex) => {
+    if (seed.reviews.length > guests.length) {
+      throw new Error(`${seed.name} has more reviews than there are guests.`);
+    }
     seed.reviews.forEach((review, reviewIndex) => {
       const room = record.roomTypes[reviewIndex % record.roomTypes.length];
       const nights = randomInt(2, 5);
       const checkOut = addDays(today, -(20 + reviewIndex * 55 + hotelIndex * 9 + randomInt(0, 10)));
       const checkIn = addDays(checkOut, -nights);
       bookings.push({
-        guest: guests[(hotelIndex + reviewIndex) % guests.length],
+        guest: guests[(hotelIndex * seed.reviews.length + reviewIndex) % guests.length],
         roomType: { ...room, hotelId: record.id },
         checkIn,
         nights,

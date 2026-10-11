@@ -37,7 +37,7 @@ The architecture and roadmap are in [docs/PLAN.md](docs/PLAN.md).
    | `DATABASE_URL_POOLED`   | Pooled connection string, used by the app (optional)       |
    | `SEED_ADMIN_EMAIL`      | Email of the admin account created by the seed             |
    | `SEED_ADMIN_PASSWORD`   | Password of that admin account (at least 8 characters)     |
-   | `SEED_GUEST_PASSWORD`   | Password for the three demo guests (optional)              |
+   | `SEED_GUEST_PASSWORD`   | Shared password for the demo guests (optional)             |
    | `AUTH_SECRET`           | Auth.js secret (generate with `npx auth secret`)           |
    | `STRIPE_SECRET_KEY`     | Stripe secret key (test mode: `sk_test_...`)               |
    | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (`whsec_...`)                |
@@ -86,9 +86,9 @@ fresh database.
 
 ### Demo data
 
-The seed creates one admin, three guests (`ayesha.khan@example.com`,
-`daniel.meyer@example.com`, `sofia.rossi@example.com`) and nine fictional
-hotels across beach, city, mountain and desert destinations, with room types,
+The seed creates one admin, twelve guests (for example
+`ayesha.khan@example.com`; the full list is in `prisma/seed.ts`) and nine
+fictional hotels across beach, city, mountain and desert destinations, with room types,
 amenities, weekend and holiday rates for the next 120 nights, bookings in
 every status, and reviews. Photos are from [Unsplash](https://unsplash.com).
 

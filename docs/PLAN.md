@@ -88,13 +88,15 @@ Rules the rest of the app relies on:
 with a demo set and upserts the demo users. It refuses to run when
 `NODE_ENV` is `production`.
 
-- 1 admin (from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`) and 3 guests.
+- 1 admin (from `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD`) and 12 guests
+  who share `SEED_GUEST_PASSWORD`.
 - 9 fictional hotels: beach (Maldives, Santorini, Bali), city (Karachi,
   Tokyo, Istanbul), mountain (Hunza, Dolomites) and desert (Dubai), with 31
   room types and 39 amenities.
 - Weekend (+20%) and holiday-season (+35% city, +50% elsewhere) rate
   overrides for the next 120 nights.
-- 56 bookings covering every status, and 45 reviews.
+- 56 bookings covering every status, and 45 reviews: 5 per hotel, each from
+  a different guest.
 
 ## Folder conventions
 
