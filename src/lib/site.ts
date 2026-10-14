@@ -8,7 +8,7 @@ export const site = {
 } as const;
 
 export const mainNav = [
-  { href: "/hotels", label: "Stays" },
+  { href: "/search", label: "Stays" },
   { href: "/destinations", label: "Destinations" },
   { href: "/wishlist", label: "Wishlist" },
 ] as const;
@@ -17,7 +17,7 @@ export const footerNav = [
   {
     title: "Explore",
     links: [
-      { href: "/hotels", label: "All stays" },
+      { href: "/search", label: "All stays" },
       { href: "/destinations", label: "Destinations" },
       { href: "/wishlist", label: "Your wishlist" },
     ],
@@ -25,9 +25,9 @@ export const footerNav = [
   {
     title: "Your trips",
     links: [
-      { href: "/account/bookings", label: "My bookings" },
-      { href: "/sign-in", label: "Sign in" },
-      { href: "/sign-up", label: "Create an account" },
+      { href: "/account/trips", label: "My trips" },
+      { href: "/login", label: "Sign in" },
+      { href: "/register", label: "Create an account" },
     ],
   },
   {

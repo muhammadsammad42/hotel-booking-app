@@ -14,8 +14,8 @@ This file is updated at the end of every phase.
 | 1  | Foundation                            | Done        |
 | 2  | Database schema + seed                | Done        |
 | 3  | Design system                         | Done        |
-| 4  | Auth + roles                          | Next        |
-| 5  | Public browsing                       | Not started |
+| 4  | Auth + roles                          | Done        |
+| 5  | Public browsing                       | Next        |
 | 6  | Availability + pricing engine         | Not started |
 | 7  | Booking + Stripe payments             | Not started |
 | 8  | Guest account                         | Not started |
@@ -44,15 +44,21 @@ This file is updated at the end of every phase.
   `DATABASE_URL_POOLED` and falls back to `DATABASE_URL`.
 - **Mutations:** Server Actions. Every input is validated with Zod and every
   action checks authorisation on the server.
-- **Auth:** Auth.js (NextAuth) with two roles, GUEST and ADMIN. Passwords are
-  hashed with bcrypt (`src/lib/password.ts`).
+- **Auth:** Auth.js v5 (`next-auth@5.0.0-beta.32`) with the Prisma adapter,
+  email and password sign-in, JWT sessions carrying the user id and role,
+  and two roles, GUEST and ADMIN. Passwords are hashed with bcrypt
+  (`src/lib/password.ts`). `src/proxy.ts` makes optimistic redirects; every
+  protected page, server action and route handler checks again with the
+  helpers in `src/lib/auth/guards.ts`, and admin checks re-read the role from
+  the database.
 - **Payments:** Stripe Checkout. A webhook route handler confirms payment and
   is the only place a booking becomes paid.
 - **Images:** hotel and room photos are remote URLs (Unsplash in the demo
   data), rendered with `next/image`. A custom loader
   (`src/lib/image-loader.ts`) has the Unsplash CDN resize them, so they do not
   pass through the Next.js image optimizer.
-- **Tests:** Vitest, focused on the availability and pricing logic.
+- **Tests:** Vitest (`npm test`), focused on pure logic: redirects,
+  validation, and the availability and pricing engine.
 
 ## Data model
 
@@ -109,12 +115,17 @@ with a demo set and upserts the demo users. It refuses to run when
 
 ```
 src/app            Routes, layouts, pages, route handlers
+  (site)/          Pages with the site header and footer
+  (auth)/          Split-screen sign-in and sign-up pages
+src/proxy.ts       Optimistic route protection (Next.js proxy)
 src/components     Shared React components
   ui/              Building blocks (buttons, inputs, dialogs...)
   layout/          Header, footer, page container
   brand/           Logo
   motion/          Animation helpers
   design/          Demos used only by the /design page
+  auth/            Sign-in and sign-up forms
+  booking/         Booking pieces shared by several pages
 src/lib            Utilities, hooks, validation schemas, domain logic
 src/generated      Generated Prisma client (not committed)
 prisma/            schema.prisma, migrations, seed.ts, seed-data/
@@ -158,10 +169,22 @@ lists every variable the app needs.
   link, and a not-found page.
 - `/design` review page and `docs/DESIGN.md`.
 
-### 4. Auth + roles
+### 4. Auth + roles (done)
 
-Sign up, sign in and sign out with Auth.js; GUEST and ADMIN roles; protected
-routes and server-side authorisation helpers.
+- Auth.js v5 with the Prisma adapter and a credentials provider; Zod
+  validation; constant-time rejection of unknown emails.
+- `/login` and `/register`: split screen with an editorial photo, inline
+  validation, password strength meter, show/hide password, loading state and
+  toasts. Users return to the page they came from, including mid-booking.
+- Proxy plus server-side guards for `/account/*`, `/wishlist`, `/book/*`
+  (signed in) and `/admin/*` (ADMIN, checked against the database).
+- Header: Sign in link and a user menu (My trips, Wishlist, Admin dashboard
+  for admins, theme, Sign out); the mobile menu has the same.
+- `/account/trips` lists the bookings of the signed-in guest; `/admin` shows headline
+  numbers until the full dashboard in phase 9.
+- Not done: Google sign-in (skipped for now; the provider can be added when
+  `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` exist), password reset (needs
+  email), and rate limiting of sign-in attempts (phase 10).
 
 ### 5. Public browsing
 

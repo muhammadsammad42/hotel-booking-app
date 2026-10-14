@@ -104,6 +104,7 @@ The data model and its rules are described in
 | --------------- | -------------------------- |
 | `npm run build` | Production build           |
 | `npm run lint`  | Lint the project           |
+| `npm test`      | Run the unit tests         |
 
 ## Project structure
 

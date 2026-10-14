@@ -7,7 +7,13 @@ import { footerNav, site } from "@/lib/site";
 
 const destinations = ["Maldives", "Santorini", "Bali", "Hunza", "Karachi", "Tokyo", "Istanbul", "Dolomites", "Dubai"];
 
-function SiteFooter() {
+function SiteFooter({ signedIn = false }: { signedIn?: boolean }) {
+  const groups = footerNav.map((group) =>
+    group.title === "Your trips" && signedIn
+      ? { ...group, links: group.links.filter((link) => link.href === "/account/trips") }
+      : group,
+  );
+
   return (
     <footer className="mt-auto border-t bg-muted/50">
       <PageContainer className="py-14 md:py-20">
@@ -24,7 +30,7 @@ function SiteFooter() {
           </div>
 
           <nav aria-label="Footer" className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3">
-            {footerNav.map((group) => (
+            {groups.map((group) => (
               <div key={group.title}>
                 <h2 className="type-eyebrow text-muted-foreground">{group.title}</h2>
                 <ul className="mt-3 grid">

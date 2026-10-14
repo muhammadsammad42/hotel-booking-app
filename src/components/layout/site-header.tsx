@@ -3,10 +3,11 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MenuIcon, SearchIcon } from "lucide-react";
+import { LayoutDashboardIcon, LogOutIcon, LuggageIcon, MenuIcon, SearchIcon } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
 import { PageContainer } from "@/components/layout/page-container";
+import { UserAvatar, UserMenu, useSignOut } from "@/components/layout/user-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,6 +21,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import type { CurrentUser } from "@/lib/auth/guards";
+import { loginPath } from "@/lib/auth/redirect";
 import { mainNav } from "@/lib/site";
 import { cn } from "@/lib/utils";
 
@@ -37,10 +40,11 @@ function useScrolled(threshold = 8) {
 }
 
 /** Transparent at the top of the page; solid with a hairline once scrolled. */
-function SiteHeader() {
+function SiteHeader({ user }: { user: CurrentUser | null }) {
   const scrolled = useScrolled();
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+  const signInHref = loginPath(pathname);
 
   return (
     <header
@@ -74,24 +78,51 @@ function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-1 md:gap-2">
-          <ThemeToggle />
-          <Button asChild variant="ghost" className="hidden md:inline-flex">
-            <Link href="/sign-in">Sign in</Link>
-          </Button>
+          {user ? (
+            <div className="hidden md:block">
+              <UserMenu user={user} />
+            </div>
+          ) : (
+            <>
+              <ThemeToggle />
+              <Button asChild variant="ghost" className="hidden md:inline-flex">
+                <Link href={signInHref}>Sign in</Link>
+              </Button>
+            </>
+          )}
           <Button asChild className="hidden md:inline-flex">
-            <Link href="/hotels">
+            <Link href="/search">
               <SearchIcon aria-hidden />
               Find a stay
             </Link>
           </Button>
-          <MobileMenu isActive={isActive} />
+          {user && (
+            <span className="md:hidden">
+              <ThemeToggle />
+            </span>
+          )}
+          <MobileMenu user={user} isActive={isActive} signInHref={signInHref} />
         </div>
       </PageContainer>
     </header>
   );
 }
 
-function MobileMenu({ isActive }: { isActive: (href: string) => boolean }) {
+function MobileMenu({
+  user,
+  isActive,
+  signInHref,
+}: {
+  user: CurrentUser | null;
+  isActive: (href: string) => boolean;
+  signInHref: string;
+}) {
+  const handleSignOut = useSignOut();
+  const accountLinks = [
+    { href: "/account/trips", label: "My trips", icon: LuggageIcon },
+    ...(user?.role === "ADMIN" ? [{ href: "/admin", label: "Admin dashboard", icon: LayoutDashboardIcon }] : []),
+  ];
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -106,7 +137,7 @@ function MobileMenu({ isActive }: { isActive: (href: string) => boolean }) {
           <SheetDescription className="sr-only">Browse stays, destinations and your account.</SheetDescription>
           <Logo className="h-8" />
         </SheetHeader>
-        <SheetBody>
+        <SheetBody className="grid content-start gap-8">
           <nav aria-label="Mobile">
             <ul className="grid">
               {mainNav.map((item) => (
@@ -124,21 +155,53 @@ function MobileMenu({ isActive }: { isActive: (href: string) => boolean }) {
               ))}
             </ul>
           </nav>
+
+          {user && (
+            <div className="grid gap-1">
+              <div className="mb-2 flex items-center gap-3">
+                <UserAvatar user={user} size="lg" />
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{user.name ?? "Your account"}</p>
+                  <p className="truncate text-sm text-muted-foreground">{user.email}</p>
+                </div>
+              </div>
+              {accountLinks.map(({ href, label, icon: Icon }) => (
+                <SheetClose asChild key={href}>
+                  <Link
+                    href={href}
+                    className="flex min-h-11 items-center gap-3 rounded-md px-1 text-sm font-medium hover:text-primary"
+                  >
+                    <Icon className="size-4 text-muted-foreground" aria-hidden />
+                    {label}
+                  </Link>
+                </SheetClose>
+              ))}
+            </div>
+          )}
         </SheetBody>
         <SheetFooter>
           <SheetClose asChild>
             <Button asChild size="lg" fullWidth>
-              <Link href="/hotels">
+              <Link href="/search">
                 <SearchIcon aria-hidden />
                 Find a stay
               </Link>
             </Button>
           </SheetClose>
-          <SheetClose asChild>
-            <Button asChild variant="outline" fullWidth>
-              <Link href="/sign-in">Sign in</Link>
-            </Button>
-          </SheetClose>
+          {user ? (
+            <SheetClose asChild>
+              <Button variant="outline" fullWidth onClick={handleSignOut}>
+                <LogOutIcon aria-hidden />
+                Sign out
+              </Button>
+            </SheetClose>
+          ) : (
+            <SheetClose asChild>
+              <Button asChild variant="outline" fullWidth>
+                <Link href={signInHref}>Sign in</Link>
+              </Button>
+            </SheetClose>
+          )}
         </SheetFooter>
       </SheetContent>
     </Sheet>
