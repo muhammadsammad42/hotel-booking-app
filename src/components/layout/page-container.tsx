@@ -5,6 +5,8 @@ import { cn } from "@/lib/utils";
 const widths = {
   /** Editorial pages: home, search results, hotel pages. */
   page: "max-w-page",
+  /** Search results with the map beside them. */
+  wide: "max-w-wide",
   /** Booking flow, account and admin: narrower and denser. */
   app: "max-w-app",
   /** Long-form text. */

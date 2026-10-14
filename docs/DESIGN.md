@@ -170,6 +170,8 @@ Inside components, use the standard Tailwind spacing scale (multiples of
 - JavaScript animation uses Motion (`motion/react-m`) with the tokens in
   `src/lib/motion.ts`. `LazyMotion` is set up in `Providers`, so import `m`
   components, not `motion`.
+- `Reveal` is CSS-driven: content is visible in the server HTML, and only
+  sections still below the fold after hydration are hidden and faded in.
 
 ### Photography
 

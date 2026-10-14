@@ -12,7 +12,17 @@ function createPrismaClient() {
     throw new Error("DATABASE_URL is not set. Copy .env.example to .env.");
   }
 
-  return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+  return new PrismaClient({
+    adapter: new PrismaPg({
+      connectionString,
+      // A few long-lived connections: opening one costs a TLS handshake and
+      // authentication, and a burst of new connections can time out on a
+      // database that has just woken up. Queries queue on the pool instead.
+      max: 5,
+      idleTimeoutMillis: 5 * 60_000,
+      connectionTimeoutMillis: 20_000,
+    }),
+  });
 }
 
 // Next.js hot reload re-evaluates this module in development, so the client

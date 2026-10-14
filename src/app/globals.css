@@ -69,6 +69,7 @@
   --spacing-section-compact: clamp(2rem, 4vw, 3rem);
   --spacing-header: 4.5rem;
   --container-page: 80rem;
+  --container-wide: 100rem;
   --container-app: 64rem;
   --container-prose: 42rem;
 
@@ -277,6 +278,44 @@
   letter-spacing: 0.16em;
   font-weight: 600;
   text-transform: uppercase;
+}
+
+/* Scroll reveal (src/components/motion/reveal.tsx): 500ms fade up. */
+[data-reveal] {
+  transition:
+    opacity 500ms var(--ease-soft) var(--reveal-delay, 0s),
+    transform 500ms var(--ease-soft) var(--reveal-delay, 0s);
+}
+[data-reveal="hidden"] {
+  opacity: 0;
+  transform: translateY(16px);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-reveal="hidden"] {
+    transform: none;
+  }
+}
+
+/* Leaflet maps, themed with tokens. OpenStreetMap has no dark tiles, so in
+   dark mode the tiles are inverted and toned down. */
+.leaflet-container {
+  font-family: var(--font-sans);
+  background: var(--muted);
+}
+.leaflet-control-attribution {
+  background: color-mix(in oklab, var(--card) 85%, transparent) !important;
+  color: var(--muted-foreground) !important;
+}
+.leaflet-control-attribution a {
+  color: var(--foreground) !important;
+}
+.leaflet-bar a {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  border-color: var(--border) !important;
+}
+.dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9) saturate(0.4);
 }
 
 /* Loading placeholder with a slow warm sweep. */

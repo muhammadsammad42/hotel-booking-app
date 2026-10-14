@@ -32,6 +32,9 @@ type DateRangePickerProps = {
   maxNights?: number;
   /** Dates that cannot be booked, in addition to dates in the past. */
   unavailable?: Matcher[];
+  /** Control the open state, e.g. to open the picker from a button elsewhere. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   className?: string;
 };
 
@@ -50,9 +53,16 @@ function DateRangePicker({
   minNights = 1,
   maxNights,
   unavailable = [],
+  open: openProp,
+  onOpenChange,
   className,
 }: DateRangePickerProps) {
-  const [open, setOpen] = React.useState(false);
+  const [openState, setOpenState] = React.useState(false);
+  const open = openProp ?? openState;
+  const setOpen = (next: boolean) => {
+    setOpenState(next);
+    onOpenChange?.(next);
+  };
   const [internal, setInternal] = React.useState(defaultValue);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 

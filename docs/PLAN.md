@@ -15,8 +15,8 @@ This file is updated at the end of every phase.
 | 2  | Database schema + seed                | Done        |
 | 3  | Design system                         | Done        |
 | 4  | Auth + roles                          | Done        |
-| 5  | Public browsing                       | Next        |
-| 6  | Availability + pricing engine         | Not started |
+| 5  | Public browsing                       | Done        |
+| 6  | Availability + pricing engine         | Next        |
 | 7  | Booking + Stripe payments             | Not started |
 | 8  | Guest account                         | Not started |
 | 9  | Admin dashboard                       | Not started |
@@ -53,6 +53,10 @@ This file is updated at the end of every phase.
   the database.
 - **Payments:** Stripe Checkout. A webhook route handler confirms payment and
   is the only place a booking becomes paid.
+- **Search:** filters live in the URL (`src/lib/search/params.ts`), so
+  results can be shared and restored. Destination, stars, amenities and
+  guests filter in the database; price and rating are applied in memory.
+- **Maps:** Leaflet with OpenStreetMap tiles, loaded only in the browser.
 - **Images:** hotel and room photos are remote URLs (Unsplash in the demo
   data), rendered with `next/image`. A custom loader
   (`src/lib/image-loader.ts`) has the Unsplash CDN resize them, so they do not
@@ -126,6 +130,10 @@ src/components     Shared React components
   design/          Demos used only by the /design page
   auth/            Sign-in and sign-up forms
   booking/         Booking pieces shared by several pages
+  home/            Home page sections
+  hotel/           Hotel cards, hotel page and the booking card
+  search/          Search form, filters, results
+  map/             Leaflet map (browser only)
 src/lib            Utilities, hooks, validation schemas, domain logic
 src/generated      Generated Prisma client (not committed)
 prisma/            schema.prisma, migrations, seed.ts, seed-data/
@@ -186,10 +194,27 @@ lists every variable the app needs.
   `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET` exist), password reset (needs
   email), and rate limiting of sign-in attempts (phase 10).
 
-### 5. Public browsing
+### 5. Public browsing (done)
 
-Home page, destination and hotel search, hotel detail and room type pages,
-wishlists.
+- Home: full-bleed hero with a floating search card (destination
+  suggestions, dates, guests), trending stays carousel, destination cards,
+  why Sarai, testimonials from seeded reviews, closing call to action.
+- `/search`: destination, dates, guests, price slider, amenities, hotel
+  class and guest rating filters (sidebar on desktop, bottom sheet on
+  mobile), sorting, animated result count, pagination, and a list and map
+  split with price pins that highlight with the cards; full-screen map
+  with a preview card on phones.
+- Hotel cards with a photo carousel, wishlist heart and Guest favourite
+  badge; `/destinations`; `/wishlist`.
+- `/hotels/[slug]`: photo grid and lightbox, highlights, description with
+  read more, amenities, room cards with Select, reviews with breakdown and
+  sub-ratings, location map, sticky booking card and mobile booking bar.
+- Skeletons, empty and error states, per-page metadata.
+- Database pool tuned (5 long-lived connections) after Neon timed out
+  authenticating bursts of new connections on a cold start.
+- Not done here: prices for chosen dates and availability (phase 6), and
+  the `/book` page that Reserve links to (phase 7). Public catalogue
+  queries are not cached yet (phase 10).
 
 ### 6. Availability + pricing engine
 
