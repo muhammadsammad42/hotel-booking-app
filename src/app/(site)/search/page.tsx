@@ -7,6 +7,7 @@ import { SearchForm } from "@/components/search/search-form";
 import { SearchNavigationProvider } from "@/components/search/search-navigation";
 import { SearchResults } from "@/components/search/search-results";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { STAY_ERROR_MESSAGES, todayIso, validateStay } from "@/lib/booking/stay";
 import { getDestinationSuggestions, getFilterAmenities, searchHotels } from "@/lib/catalog/hotels";
 import { parseSearchParams } from "@/lib/search/params";
 import { getWishlistIds } from "@/lib/wishlist/queries";
@@ -22,12 +23,16 @@ export async function generateMetadata({ searchParams }: PageProps<"/search">): 
 }
 
 export default async function SearchPage({ searchParams }: PageProps<"/search">) {
-  const filters = parseSearchParams(await searchParams);
+  const parsed = parseSearchParams(await searchParams);
+  // Dates must also pass the booking rules (not in the past, not too long).
+  const stay = parsed.checkIn && parsed.checkOut ? validateStay(parsed.checkIn, parsed.checkOut, todayIso()) : null;
+  const dateNotice = stay && !stay.ok ? STAY_ERROR_MESSAGES[stay.error] : null;
+  const filters = stay && !stay.ok ? { ...parsed, checkIn: null, checkOut: null } : parsed;
   const user = await getCurrentUser();
   const [suggestions, amenities, result, savedIds] = await Promise.all([
     getDestinationSuggestions(),
     getFilterAmenities(),
-    searchHotels(filters),
+    searchHotels(filters, stay?.ok ? { checkIn: stay.checkIn, checkOut: stay.checkOut } : null),
     getWishlistIds(user?.id),
   ]);
   const options = { amenities, priceBounds: result.priceBounds };
@@ -48,7 +53,19 @@ export default async function SearchPage({ searchParams }: PageProps<"/search">)
 
       <PageContainer width="wide" className="py-6 pb-24 lg:pb-10">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-          <ResultCount total={result.total} destination={filters.destination} />
+          <div className="grid gap-1">
+            <ResultCount total={result.total} destination={filters.destination} />
+            {dateNotice && (
+              <p role="status" className="text-sm text-warning">
+                {dateNotice} Showing stays for any dates.
+              </p>
+            )}
+            {stay?.ok && (
+              <p className="text-sm text-muted-foreground">
+                Available for all {stay.nights} {stay.nights === 1 ? "night" : "nights"}, priced for your dates.
+              </p>
+            )}
+          </div>
           <div className="flex items-center gap-2">
             <FilterSheet options={options} total={result.total} />
             <SortSelect />

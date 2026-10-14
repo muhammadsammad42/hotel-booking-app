@@ -35,6 +35,20 @@ type DateRangePickerProps = {
   /** Control the open state, e.g. to open the picker from a button elsewhere. */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * Checks a new selection. Return a different range to correct it and a
+   * message to explain why, e.g. when the stay crosses a sold-out night.
+   */
+  validateRange?: (next: DateRange | undefined, clicked: Date) => { range: DateRange | undefined; message?: string };
+  /** Extra props for the month grid: custom day buttons, labels, modifiers. */
+  calendarProps?: Partial<
+    Pick<
+      React.ComponentProps<typeof Calendar>,
+      "components" | "labels" | "modifiers" | "modifiersClassNames" | "animate" | "className" | "endMonth"
+    >
+  >;
+  /** Extra content under the summary, such as a price legend. */
+  footerNote?: React.ReactNode;
   className?: string;
 };
 
@@ -55,8 +69,12 @@ function DateRangePicker({
   unavailable = [],
   open: openProp,
   onOpenChange,
+  validateRange,
+  calendarProps,
+  footerNote,
   className,
 }: DateRangePickerProps) {
+  const [notice, setNotice] = React.useState<string>();
   const [openState, setOpenState] = React.useState(false);
   const open = openProp ?? openState;
   const setOpen = (next: boolean) => {
@@ -69,9 +87,13 @@ function DateRangePicker({
   const range = value ?? internal;
   const nights = range?.from && range.to ? differenceInCalendarDays(range.to, range.from) : 0;
 
-  function select(next: DateRange | undefined) {
-    setInternal(next);
-    onChange?.(next);
+  function select(next: DateRange | undefined, clicked?: Date) {
+    let value = next;
+    let message: string | undefined;
+    if (validateRange && clicked) ({ range: value, message } = validateRange(next, clicked));
+    setNotice(message);
+    setInternal(value);
+    onChange?.(value);
   }
 
   const summary = !range?.from
@@ -115,7 +137,7 @@ function DateRangePicker({
       // Keyboard users land on the day grid, not the month arrows.
       autoFocus
       selected={range}
-      onSelect={select}
+      onSelect={(next, clicked) => select(next, clicked)}
       numberOfMonths={isDesktop ? 2 : 1}
       defaultMonth={range?.from}
       startMonth={startOfToday()}
@@ -123,6 +145,7 @@ function DateRangePicker({
       excludeDisabled
       min={minNights}
       max={maxNights}
+      {...calendarProps}
     />
   );
 
@@ -144,9 +167,12 @@ function DateRangePicker({
         <PopoverContent className="w-auto p-5" aria-label="Select dates">
           {calendar}
           <div className="mt-4 flex items-center justify-between gap-4 border-t pt-4">
-            <p className="text-sm text-muted-foreground" aria-live="polite">
-              {summary}
-            </p>
+            <div className="grid gap-1">
+              <p className={cn("text-sm", notice ? "text-warning" : "text-muted-foreground")} aria-live="polite">
+                {notice ?? summary}
+              </p>
+              {footerNote}
+            </div>
             <div className="flex shrink-0 items-center gap-2">{actions}</div>
           </div>
         </PopoverContent>
@@ -160,7 +186,10 @@ function DateRangePicker({
       <SheetContent side="bottom">
         <SheetHeader>
           <SheetTitle>Select dates</SheetTitle>
-          <SheetDescription aria-live="polite">{summary}</SheetDescription>
+          <SheetDescription aria-live="polite" className={notice ? "text-warning" : undefined}>
+            {notice ?? summary}
+          </SheetDescription>
+          {footerNote}
         </SheetHeader>
         <SheetBody className="flex justify-center">{calendar}</SheetBody>
         <SheetFooter className="flex-row items-center justify-between">{actions}</SheetFooter>

@@ -31,8 +31,10 @@ function Calendar({
       classNames={{
         root: cn("w-fit", defaults.root),
         months: cn("relative flex flex-col gap-6 md:flex-row md:gap-8", defaults.months),
-        month: cn("flex w-full flex-col gap-3", defaults.month),
-        nav: cn("absolute inset-x-0 top-0 flex items-center justify-between", defaults.nav),
+        // Clips the sliding weeks when the month changes.
+        month: cn("relative flex w-full flex-col gap-3 overflow-hidden", defaults.month),
+        // Above the months, which are positioned to clip their animation.
+        nav: cn("absolute inset-x-0 top-0 z-10 flex items-center justify-between", defaults.nav),
         button_previous: cn(navButton, defaults.button_previous),
         button_next: cn(navButton, defaults.button_next),
         month_caption: cn(
@@ -80,9 +82,19 @@ function CalendarDayButton({
   className,
   day,
   modifiers,
+  ref: forwardedRef,
   ...props
-}: React.ComponentProps<typeof DayButton>) {
+}: React.ComponentProps<typeof DayButton> & { ref?: React.Ref<HTMLButtonElement> }) {
   const ref = React.useRef<HTMLButtonElement>(null);
+  // Keep our ref for focus management and pass the element on, e.g. to a tooltip.
+  const setRef = React.useCallback(
+    (element: HTMLButtonElement | null) => {
+      ref.current = element;
+      if (typeof forwardedRef === "function") forwardedRef(element);
+      else if (forwardedRef) (forwardedRef as React.RefObject<HTMLButtonElement | null>).current = element;
+    },
+    [forwardedRef],
+  );
 
   React.useEffect(() => {
     if (modifiers.focused) ref.current?.focus();
@@ -93,7 +105,7 @@ function CalendarDayButton({
 
   return (
     <button
-      ref={ref}
+      ref={setRef}
       type="button"
       data-day={day.isoDate}
       data-today={modifiers.today || undefined}

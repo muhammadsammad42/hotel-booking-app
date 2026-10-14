@@ -16,8 +16,8 @@ This file is updated at the end of every phase.
 | 3  | Design system                         | Done        |
 | 4  | Auth + roles                          | Done        |
 | 5  | Public browsing                       | Done        |
-| 6  | Availability + pricing engine         | Next        |
-| 7  | Booking + Stripe payments             | Not started |
+| 6  | Availability + pricing engine         | Done        |
+| 7  | Booking + Stripe payments             | Next        |
 | 8  | Guest account                         | Not started |
 | 9  | Admin dashboard                       | Not started |
 | 10 | Production readiness + tests + deploy | Not started |
@@ -56,6 +56,12 @@ This file is updated at the end of every phase.
 - **Search:** filters live in the URL (`src/lib/search/params.ts`), so
   results can be shared and restored. Destination, stars, amenities and
   guests filter in the database; price and rating are applied in memory.
+- **Booking engine:** pure functions in `src/lib/booking/engine.ts` and
+  `stay.ts` (nightly prices, availability, quote, stay rules), fed by
+  `data.ts`, which loads overrides, blocks and bookings in three queries.
+  The same functions run on the server and, for instant quotes on the hotel
+  page, in the browser; the server always recalculates before booking.
+  Rates and limits are in `src/lib/booking/config.ts`.
 - **Maps:** Leaflet with OpenStreetMap tiles, loaded only in the browser.
 - **Images:** hotel and room photos are remote URLs (Unsplash in the demo
   data), rendered with `next/image`. A custom loader
@@ -216,10 +222,21 @@ lists every variable the app needs.
   the `/book` page that Reserve links to (phase 7). Public catalogue
   queries are not cached yet (phase 10).
 
-### 6. Availability + pricing engine
+### 6. Availability + pricing engine (done)
 
-Date-range availability that prevents double bookings, and price calculation
-per stay from base prices and rate overrides. Covered by unit tests.
+- `getNightlyPrices`, `getAvailability`, `quote`, `buildCalendar` and
+  `validateStay`: UTC calendar dates, check-out exclusive, rate overrides,
+  blocks, confirmed and in-house bookings and unexpired holds; taxes (10%)
+  and service fee (5%) in integer cents; maximum stay 30 nights, bookings up
+  to 365 days ahead, no past dates.
+- 30 engine tests (52 in total) for overlapping bookings, expired holds,
+  overrides, blocks, edge dates and validation.
+- Search with dates shows only stays free for every night, priced for the
+  dates; invalid dates are explained and ignored.
+- Hotel page calendar: prices under each date, cheaper dates in green,
+  sold-out nights struck through with a tooltip and refused in a stay,
+  animated month changes; live, animated price breakdown; "Only N rooms
+  left" badges; room cards priced for the dates.
 
 ### 7. Booking + Stripe payments
 

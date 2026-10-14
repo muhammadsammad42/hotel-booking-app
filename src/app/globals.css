@@ -296,6 +296,42 @@
   }
 }
 
+/* Month changes in the calendar (react-day-picker animate). The library
+   adds these classes and removes the old month when its animation ends, so
+   they must exist even though its own stylesheet is not loaded. */
+@keyframes rdp-slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+@keyframes rdp-slide-in-right {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes rdp-slide-out-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+@keyframes rdp-slide-out-right {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+@keyframes rdp-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes rdp-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.rdp-weeks_before_enter { animation: rdp-slide-in-left 250ms var(--ease-soft) forwards; }
+.rdp-weeks_before_exit { animation: rdp-slide-out-left 250ms var(--ease-soft) forwards; }
+.rdp-weeks_after_enter { animation: rdp-slide-in-right 250ms var(--ease-soft) forwards; }
+.rdp-weeks_after_exit { animation: rdp-slide-out-right 250ms var(--ease-soft) forwards; }
+.rdp-caption_before_enter,
+.rdp-caption_after_enter { animation: rdp-fade-in 250ms var(--ease-soft) forwards; }
+.rdp-caption_before_exit,
+.rdp-caption_after_exit { animation: rdp-fade-out 250ms var(--ease-soft) forwards; }
+
 /* Leaflet maps, themed with tokens. OpenStreetMap has no dark tiles, so in
    dark mode the tiles are inverted and toned down. */
 .leaflet-container {

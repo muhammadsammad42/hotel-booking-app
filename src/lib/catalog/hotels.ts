@@ -1,4 +1,5 @@
 import type { Prisma } from "@/generated/prisma/client";
+import { getRoomStays } from "@/lib/booking/data";
 import { prisma } from "@/lib/prisma";
 import { PAGE_SIZE, slugify, type SearchFilters } from "@/lib/search/params";
 
@@ -66,15 +67,16 @@ export type SearchResult = {
 };
 
 /**
- * Finds hotels for the search page. Destination, stars, amenities and guests
- * filter in the database; price and rating need computed values, so they are
+ * Finds hotels for the search page. With a stay, a hotel appears only if at
+ * least one room type is free for every night, priced by the engine at its
+ * average nightly rate for those dates; without one, at its lowest base price.
+ * Destination, stars, amenities and guests filter in the database; price and rating need computed values, so they are
  * applied to the candidates afterwards. Fine at this catalogue size; a larger
  * one would store the rating summary on the hotel.
  */
 export async function searchHotels(
   filters: SearchFilters,
-  priceFor: (roomTypes: { id: string; basePrice: number }[]) => Promise<number | null> | number | null = (rooms) =>
-    rooms.length ? Math.min(...rooms.map((room) => room.basePrice)) : null,
+  stay: { checkIn: string; checkOut: string } | null = null,
 ): Promise<SearchResult> {
   const amenityNames = filters.amenities.length
     ? (await getFilterAmenities()).filter((a) => filters.amenities.includes(a.slug)).map((a) => a.name)
@@ -99,18 +101,23 @@ export async function searchHotels(
 
   const candidates = await prisma.hotel.findMany({
     where,
-    include: { ...cardInclude, roomTypes: { where: roomFilter, select: { id: true, basePrice: true } } },
+    include: { ...cardInclude, roomTypes: { where: roomFilter, select: { id: true, basePrice: true, totalInventory: true } } },
   });
-  const ratings = await getRatings(candidates.map((hotel) => hotel.id));
+  const [ratings, stays] = await Promise.all([
+    getRatings(candidates.map((hotel) => hotel.id)),
+    stay ? getRoomStays(candidates.flatMap((hotel) => hotel.roomTypes), stay) : null,
+  ]);
 
-  const priced = (
-    await Promise.all(
-      candidates.map(async (hotel) => {
-        const price = await priceFor(hotel.roomTypes);
-        return price === null ? null : { hotel, price };
-      }),
-    )
-  ).filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+  const priced = candidates
+    .map((hotel) => {
+      const prices = stays
+        ? hotel.roomTypes
+            .filter((room) => stays.get(room.id)?.availability.bookable)
+            .map((room) => stays.get(room.id)!.quote.averageNightly)
+        : hotel.roomTypes.map((room) => room.basePrice);
+      return prices.length ? { hotel, price: Math.min(...prices) } : null;
+    })
+    .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
 
   const dollars = priced.map((entry) => Math.round(entry.price / 100));
   const priceBounds = dollars.length

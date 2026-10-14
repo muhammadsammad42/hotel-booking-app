@@ -16,6 +16,8 @@ import { PageContainer } from "@/components/layout/page-container";
 import { Badge } from "@/components/ui/badge";
 import { RatingStars } from "@/components/ui/rating-stars";
 import { getCurrentUser } from "@/lib/auth/guards";
+import { getRoomCalendars } from "@/lib/booking/data";
+import { todayIso, validateStay } from "@/lib/booking/stay";
 import { getHotelBySlug } from "@/lib/catalog/hotels";
 import { parseSearchParams } from "@/lib/search/params";
 import { getWishlistIds } from "@/lib/wishlist/queries";
@@ -46,9 +48,13 @@ export default async function HotelPage({ params, searchParams }: PageProps<"/ho
   const hotel = await getHotelBySlug(slug);
   if (!hotel || hotel.roomTypes.length === 0) notFound();
 
-  const stay = parseSearchParams(query);
+  const parsed = parseSearchParams(query);
+  // Ignore dates from the URL that break the booking rules (e.g. in the past).
+  const datesValid = parsed.checkIn && parsed.checkOut && validateStay(parsed.checkIn, parsed.checkOut, todayIso()).ok;
+  const stay = datesValid ? parsed : { ...parsed, checkIn: null, checkOut: null };
   const user = await getCurrentUser();
-  const saved = (await getWishlistIds(user?.id)).has(hotel.id);
+  const [savedIds, calendars] = await Promise.all([getWishlistIds(user?.id), getRoomCalendars(hotel.roomTypes)]);
+  const saved = savedIds.has(hotel.id);
   const roomParam = typeof query.room === "string" ? query.room : undefined;
 
   const highlights = [
@@ -75,6 +81,7 @@ export default async function HotelPage({ params, searchParams }: PageProps<"/ho
         maxGuests: room.maxGuests,
         totalInventory: room.totalInventory,
       }))}
+      calendars={calendars}
       initial={{ checkIn: stay.checkIn, checkOut: stay.checkOut, guests: stay.guests, roomId: roomParam }}
     >
       <article className="pb-28 lg:pb-0">

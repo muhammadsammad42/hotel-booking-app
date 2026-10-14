@@ -3,6 +3,8 @@
 import * as React from "react";
 
 import type { DateRange } from "@/components/ui/date-range-picker";
+import { BOOKING_CONFIG } from "@/lib/booking/config";
+import { quote, stayFromCalendar, type Quote, type RoomCalendar } from "@/lib/booking/engine";
 import { fromIsoDate, toIsoDate } from "@/lib/dates";
 import { DEFAULT_FILTERS } from "@/lib/search/params";
 
@@ -14,19 +16,33 @@ export type BookableRoom = {
   totalInventory: number;
 };
 
+export type RoomStay = {
+  quote: Quote;
+  /** Fewest free rooms on any night of the stay. */
+  minAvailable: number;
+  bookable: boolean;
+};
+
 type HotelBookingValue = {
   hotelSlug: string;
   rooms: BookableRoom[];
   room: BookableRoom;
   setRoomId: (id: string) => void;
+  calendars: Record<string, RoomCalendar>;
   range: DateRange | undefined;
   setRange: (range: DateRange | undefined) => void;
   guests: number;
   setGuests: (guests: number) => void;
   /** Rooms of the chosen type needed for the guests. */
   roomCount: number;
+  /** True when the guests need more rooms than one booking can take. */
+  tooManyGuests: boolean;
   checkIn: string | null;
   checkOut: string | null;
+  /** The chosen room for the chosen dates, or null without dates. */
+  stay: RoomStay | null;
+  /** Any room type for the chosen dates and guests. */
+  stayFor: (room: BookableRoom) => RoomStay | null;
   /** Opens the date picker, e.g. when Reserve is pressed without dates. */
   datesOpen: boolean;
   setDatesOpen: (open: boolean) => void;
@@ -38,29 +54,55 @@ const HotelBookingContext = React.createContext<HotelBookingValue | null>(null);
 type ProviderProps = {
   hotelSlug: string;
   rooms: BookableRoom[];
+  calendars: Record<string, RoomCalendar>;
   initial: { checkIn: string | null; checkOut: string | null; guests: number; roomId?: string };
   children: React.ReactNode;
 };
 
 /**
- * The stay being planned on a hotel page: room, dates and guests. Shared by
- * the room cards, the booking card and the mobile booking bar, and mirrored
- * to the URL so a reload or a shared link keeps it.
+ * The stay being planned on a hotel page: room, dates and guests. Prices and
+ * availability come from the room calendars loaded on the server and run
+ * through the same engine the server uses, so changes show instantly. The
+ * server recalculates everything again when the booking is made.
  */
-export function HotelBookingProvider({ hotelSlug, rooms, initial, children }: ProviderProps) {
+export function HotelBookingProvider({ hotelSlug, rooms, calendars, initial, children }: ProviderProps) {
   const fitting = rooms.find((room) => room.maxGuests >= initial.guests) ?? rooms[0];
-  const [roomId, setRoomId] = React.useState(rooms.some((room) => room.id === initial.roomId) ? initial.roomId! : fitting.id);
+  const [roomId, setRoomId] = React.useState(
+    rooms.some((room) => room.id === initial.roomId) ? initial.roomId! : fitting.id,
+  );
   const [range, setRange] = React.useState<DateRange | undefined>(
-    initial.checkIn && initial.checkOut ? { from: fromIsoDate(initial.checkIn), to: fromIsoDate(initial.checkOut) } : undefined,
+    initial.checkIn && initial.checkOut
+      ? { from: fromIsoDate(initial.checkIn), to: fromIsoDate(initial.checkOut) }
+      : undefined,
   );
   const [guests, setGuests] = React.useState(initial.guests);
   const [datesOpen, setDatesOpen] = React.useState(false);
 
   const room = rooms.find((item) => item.id === roomId) ?? rooms[0];
-  const roomCount = Math.max(1, Math.ceil(guests / room.maxGuests));
   const complete = Boolean(range?.from && range.to && range.to > range.from);
   const checkIn = complete ? toIsoDate(range!.from!) : null;
   const checkOut = complete ? toIsoDate(range!.to!) : null;
+
+  const roomsNeeded = (candidate: BookableRoom) => Math.max(1, Math.ceil(guests / candidate.maxGuests));
+  const roomCount = Math.min(roomsNeeded(room), BOOKING_CONFIG.maxRooms);
+  const tooManyGuests = roomsNeeded(room) > BOOKING_CONFIG.maxRooms;
+
+  const stayFor = React.useCallback(
+    (candidate: BookableRoom): RoomStay | null => {
+      if (!checkIn || !checkOut) return null;
+      const calendar = calendars[candidate.id];
+      const nights = calendar && stayFromCalendar(calendar, checkIn, checkOut);
+      if (!nights) return null;
+      const count = Math.min(Math.max(1, Math.ceil(guests / candidate.maxGuests)), BOOKING_CONFIG.maxRooms);
+      return {
+        quote: quote({ nights: nights.nights, rooms: count }),
+        minAvailable: nights.minAvailable,
+        bookable: nights.minAvailable >= count && Math.ceil(guests / candidate.maxGuests) <= BOOKING_CONFIG.maxRooms,
+      };
+    },
+    [calendars, checkIn, checkOut, guests],
+  );
+  const stay = stayFor(room);
 
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -79,7 +121,7 @@ export function HotelBookingProvider({ hotelSlug, rooms, initial, children }: Pr
   }, [checkIn, checkOut, guests, roomId]);
 
   const reserveHref =
-    checkIn && checkOut
+    checkIn && checkOut && stay?.bookable
       ? `/book?${new URLSearchParams({
           hotel: hotelSlug,
           room: roomId,
@@ -97,13 +139,17 @@ export function HotelBookingProvider({ hotelSlug, rooms, initial, children }: Pr
         rooms,
         room,
         setRoomId,
+        calendars,
         range,
         setRange,
         guests,
         setGuests,
         roomCount,
+        tooManyGuests,
         checkIn,
         checkOut,
+        stay,
+        stayFor,
         datesOpen,
         setDatesOpen,
         reserveHref,

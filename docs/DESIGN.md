@@ -211,6 +211,8 @@ Small sizes grow to 44px on touch screens automatically.
 | `Checkbox` | Yes/no and multi-select | Wrap it in a `<label>` with its text; the hit area is 44px. |
 | `DateRangePicker` | Check-in and check-out | Popover with two months on desktop, bottom sheet with one month on mobile. `minNights`, `maxNights` and `unavailable` limit the selection. |
 | `Calendar` | Other date needs | The month grid behind `DateRangePicker`. |
+| `StayDatePicker` | Dates on a hotel page | `DateRangePicker` with prices under each date, cheaper dates in green and sold-out nights struck through. |
+| `PriceBreakdown` | Any price of a stay | Nightly rate, taxes, service fee and total, with amounts that roll when they change. |
 
 Validate with Zod on the server and show the message through `Field`'s
 `error`. Never rely on colour alone: errors have an icon and text.

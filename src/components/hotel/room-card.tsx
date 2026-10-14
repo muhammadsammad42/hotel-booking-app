@@ -6,6 +6,7 @@ import { BedDoubleIcon, CheckIcon, RulerIcon, UsersIcon } from "lucide-react";
 import useEmblaCarousel from "embla-carousel-react";
 
 import { AmenityIcon } from "@/components/hotel/amenity-icon";
+import { LowAvailabilityBadge } from "@/components/hotel/booking-card";
 import { useHotelBooking } from "@/components/hotel/booking-context";
 import { Button } from "@/components/ui/button";
 import { PriceTag } from "@/components/ui/price-tag";
@@ -77,6 +78,8 @@ function RoomPhotos({ images, name }: { images: RoomCardData["images"]; name: st
 export function RoomCard({ room }: { room: RoomCardData }) {
   const booking = useHotelBooking();
   const selected = booking.room.id === room.id;
+  const bookable = booking.rooms.find((item) => item.id === room.id);
+  const stay = bookable ? booking.stayFor(bookable) : null;
 
   function select() {
     booking.setRoomId(room.id);
@@ -125,7 +128,20 @@ export function RoomCard({ room }: { room: RoomCardData }) {
           )}
         </ul>
         <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-          <PriceTag amount={room.basePrice} prefix="From" />
+          <div className="grid gap-1">
+            {stay ? (
+              stay.bookable ? (
+                <>
+                  <PriceTag amount={stay.quote.averageNightly} />
+                  <LowAvailabilityBadge available={stay.minAvailable} />
+                </>
+              ) : (
+                <p className="text-sm font-medium text-warning">Not available for your dates</p>
+              )
+            ) : (
+              <PriceTag amount={room.basePrice} prefix="From" />
+            )}
+          </div>
           <Button variant={selected ? "secondary" : "outline"} onClick={select} aria-pressed={selected}>
             {selected && <CheckIcon aria-hidden />}
             {selected ? "Selected" : "Select"}
