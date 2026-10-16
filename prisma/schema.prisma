@@ -255,6 +255,10 @@ model Booking {
   checkOut        DateTime      @db.Date
   guests          Int
   rooms           Int           @default(1)
+  // Price snapshot taken when the booking is made: rates can change later.
+  subtotal        Int           @default(0)
+  taxes           Int           @default(0)
+  serviceFee      Int           @default(0)
   totalPrice      Int
   currency        String        @default("USD") @db.Char(3)
   status          BookingStatus @default(PENDING)

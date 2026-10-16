@@ -10,6 +10,7 @@ import {
   type BookingStatus,
   type PaymentStatus,
 } from "../src/generated/prisma/client";
+import { quote } from "../src/lib/booking/engine";
 import { hashPassword } from "../src/lib/password";
 import { amenities } from "./seed-data/amenities";
 import { hotels, type SeedHotel } from "./seed-data/hotels";
@@ -317,12 +318,13 @@ async function createBooking(input: BookingInput, prices: Map<string, number>) {
   const rooms = input.rooms ?? 1;
   const checkOut = addDays(input.checkIn, input.nights);
 
-  let totalPrice = 0;
-  for (let night = 0; night < input.nights; night++) {
+  // Priced like a real booking: nightly rates, then taxes and the service fee.
+  const nights = Array.from({ length: input.nights }, (_, night) => {
     const date = addDays(input.checkIn, night);
-    const nightly = prices.get(`${input.roomType.id}:${dateKey(date)}`) ?? input.roomType.basePrice;
-    totalPrice += nightly * rooms;
-  }
+    return { date: dateKey(date), price: prices.get(`${input.roomType.id}:${dateKey(date)}`) ?? input.roomType.basePrice, override: false };
+  });
+  const price = quote({ nights, rooms });
+  const totalPrice = price.total;
 
   const reference = bookingReference();
   const paid = input.payment === "SUCCEEDED" || input.payment === "REFUNDED";
@@ -336,6 +338,9 @@ async function createBooking(input: BookingInput, prices: Map<string, number>) {
       checkOut,
       guests: input.guests,
       rooms,
+      subtotal: price.subtotal,
+      taxes: price.taxes,
+      serviceFee: price.serviceFee,
       totalPrice,
       status: input.status,
       expiresAt: input.expiresAt,

@@ -1,4 +1,5 @@
 // Loads the rows the engine needs and runs it. Server only.
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 import { BOOKING_CONFIG } from "./config";
@@ -24,19 +25,25 @@ type Rows = { overrides: RateOverrideInput[]; blocks: BlockInput[]; bookings: Bo
  * Rate overrides, blocks and inventory-holding bookings for many room types
  * over [from, to), grouped by room type. Three queries however many rooms.
  */
-export async function loadEngineRows(roomTypeIds: string[], from: string, to: string) {
+export async function loadEngineRows(
+  roomTypeIds: string[],
+  from: string,
+  to: string,
+  // A transaction client, so a booking can re-check inside its transaction.
+  db: Prisma.TransactionClient = prisma,
+) {
   const start = toUtcDate(from);
   const end = toUtcDate(to);
   const [overrides, blocks, bookings] = await Promise.all([
-    prisma.rateOverride.findMany({
+    db.rateOverride.findMany({
       where: { roomTypeId: { in: roomTypeIds }, date: { gte: start, lt: end } },
       select: { roomTypeId: true, date: true, price: true },
     }),
-    prisma.availabilityBlock.findMany({
+    db.availabilityBlock.findMany({
       where: { roomTypeId: { in: roomTypeIds }, date: { gte: start, lt: end } },
       select: { roomTypeId: true, date: true, roomsBlocked: true },
     }),
-    prisma.booking.findMany({
+    db.booking.findMany({
       where: {
         roomTypeId: { in: roomTypeIds },
         checkIn: { lt: end },

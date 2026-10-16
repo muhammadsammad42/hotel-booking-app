@@ -10,6 +10,12 @@ export const BOOKING_CONFIG = {
   maxAdvanceDays: 365,
   /** How many rooms of one type a single booking can take. */
   maxRooms: 4,
+  /**
+   * How long a pending booking holds its rooms while the guest pays. Stripe
+   * Checkout Sessions must stay open at least 30 minutes, and the session
+   * expires with the hold.
+   */
+  holdMinutes: 30,
   /** Rooms left at which the "Only N left" badge appears. */
   lowAvailability: 2,
   currency: "USD",

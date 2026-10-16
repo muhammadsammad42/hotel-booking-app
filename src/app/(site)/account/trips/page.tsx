@@ -59,7 +59,10 @@ function TripCard({ trip }: { trip: Trip }) {
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <h3 className="type-title-md">
-              <Link href={`/hotels/${hotel.slug}`} className="outline-none after:absolute after:inset-0">
+              <Link
+                href={trip.status === "PENDING" ? `/book/${trip.id}` : `/hotels/${hotel.slug}`}
+                className="outline-none after:absolute after:inset-0"
+              >
                 {hotel.name}
               </Link>
             </h3>
@@ -91,7 +94,10 @@ function TripCard({ trip }: { trip: Trip }) {
           </div>
         </dl>
         <div className="mt-auto flex flex-wrap items-end justify-between gap-2 border-t pt-3">
-          <p className="font-mono text-xs text-muted-foreground">{trip.reference}</p>
+          <p className="font-mono text-xs text-muted-foreground">
+            {trip.reference}
+            {trip.status === "PENDING" && <span className="ml-2 font-sans font-semibold text-primary">Complete payment</span>}
+          </p>
           <PriceTag amount={trip.totalPrice} currency={trip.currency} unit={null} size="sm" />
         </div>
       </div>

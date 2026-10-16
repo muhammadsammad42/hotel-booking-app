@@ -252,6 +252,16 @@ Dialogs and sheets must have a title (`DialogTitle`, `SheetTitle`); hide it
 with `sr-only` if the design has none. Escape closes every overlay and focus
 returns to the trigger.
 
+### Booking flow
+
+| Component | Use it for | Notes |
+| --- | --- | --- |
+| `BookingSteps` | Top of every booking page | Details, Payment, Confirmed. |
+| `StaySummary` | The stay being booked | Hotel photo, room, dates, guests and `PriceBreakdown`; sticky on desktop. |
+| `HoldCountdown` | Pending bookings | Turns amber in the last five minutes and refreshes the page when the hold ends. |
+| `CopyButton` | Booking references | Confirms with a tick and a toast. |
+| `Confetti` | The confirmation page only | A short burst; skipped when the system asks for less motion. |
+
 ### States
 
 Every screen that loads data needs all three:

@@ -17,8 +17,8 @@ This file is updated at the end of every phase.
 | 4  | Auth + roles                          | Done        |
 | 5  | Public browsing                       | Done        |
 | 6  | Availability + pricing engine         | Done        |
-| 7  | Booking + Stripe payments             | Next        |
-| 8  | Guest account                         | Not started |
+| 7  | Booking + Stripe payments             | Done        |
+| 8  | Guest account                         | Next        |
 | 9  | Admin dashboard                       | Not started |
 | 10 | Production readiness + tests + deploy | Not started |
 | 11 | Final UI/UX polish                    | Not started |
@@ -51,8 +51,14 @@ This file is updated at the end of every phase.
   protected page, server action and route handler checks again with the
   helpers in `src/lib/auth/guards.ts`, and admin checks re-read the role from
   the database.
-- **Payments:** Stripe Checkout. A webhook route handler confirms payment and
-  is the only place a booking becomes paid.
+- **Payments:** Stripe Checkout (hosted). A booking is created PENDING with
+  a 30-minute hold inside a transaction that locks the room type row and
+  re-checks availability, so the last room cannot be sold twice. The
+  Checkout Session expires with the hold. The webhook
+  (`/api/webhooks/stripe`, signature verified) and the success page both
+  confirm through the same idempotent function in
+  `src/lib/booking/holds.ts`; a payment that arrives after the hold lapsed
+  is confirmed if the rooms are still free and refunded otherwise.
 - **Search:** filters live in the URL (`src/lib/search/params.ts`), so
   results can be shared and restored. Destination, stars, amenities and
   guests filter in the database; price and rating are applied in memory.
@@ -238,10 +244,26 @@ lists every variable the app needs.
   animated month changes; live, animated price breakdown; "Only N rooms
   left" badges; room cards priced for the dates.
 
-### 7. Booking + Stripe payments
+### 7. Booking + Stripe payments (done)
 
-Booking flow with a timed hold, Stripe Checkout session, webhook
-confirmation, and handling of abandoned or failed payments.
+- Flow: Reserve on the hotel page, then `/book` (review, guest details
+  pre-filled from the account, sign-in required), `/book/[id]` (hold
+  countdown and Pay), Stripe Checkout, and `/book/[id]/confirmed` or
+  `/book/[id]/cancelled`, with a 3-step progress indicator.
+- Holds last 30 minutes, the shortest lifetime Stripe allows for a
+  Checkout Session (the brief asked for 15).
+- The price breakdown is stored on the booking (new migration); prices are
+  always recalculated on the server.
+- Webhook for `checkout.session.completed`, `expired` and the async payment
+  events: signature verified, idempotent, with a clear error when
+  `STRIPE_WEBHOOK_SECRET` is missing. `/api/cron/expire-holds` releases
+  lapsed holds.
+- Confirmation page with confetti, the booking reference with a copy button,
+  an `.ics` download and a link to My trips; a reassuring cancelled page
+  with one-click retry; friendly expired and refunded states.
+- Charges in USD, as shown on Sarai (Stripe Adaptive Pricing off).
+- Not done: confirmation emails (Resend skipped for now), and scheduling the
+  clean-up route (phase 10).
 
 ### 8. Guest account
 

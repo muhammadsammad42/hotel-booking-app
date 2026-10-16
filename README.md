@@ -43,7 +43,10 @@ system is documented in [docs/DESIGN.md](docs/DESIGN.md) and shown live at
    | `SEED_GUEST_PASSWORD`   | Shared password for the demo guests (optional)             |
    | `AUTH_SECRET`           | Auth.js secret (generate with `npx auth secret`)           |
    | `STRIPE_SECRET_KEY`     | Stripe secret key (test mode: `sk_test_...`)               |
-   | `STRIPE_WEBHOOK_SECRET` | Stripe webhook signing secret (`whsec_...`)                |
+   | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key (`pk_test_...`)        |
+   | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (`whsec_...`, see below)            |
+   | `APP_URL`               | Public URL of the site (optional locally)                  |
+   | `CRON_SECRET`           | Protects the hold clean-up route (required in production)  |
 
 3. Create the database tables and load the demo data:
 
@@ -97,6 +100,39 @@ every status, and reviews. Photos are from [Unsplash](https://unsplash.com).
 
 The data model and its rules are described in
 [docs/PLAN.md](docs/PLAN.md#data-model).
+
+## Testing payments (Stripe test mode)
+
+1. Install the [Stripe CLI](https://docs.stripe.com/stripe-cli) and log in:
+
+   ```bash
+   stripe login
+   ```
+
+2. In a second terminal, forward webhooks to the app and copy the
+   `whsec_...` secret it prints into `STRIPE_WEBHOOK_SECRET` in `.env`:
+
+   ```bash
+   stripe listen --forward-to localhost:3000/api/webhooks/stripe
+   ```
+
+3. Restart `npm run dev`, sign in, pick dates on a hotel page and press
+   Reserve. On the Stripe page, choose Card and use any future expiry date
+   and any CVC:
+
+   | Card                  | Result                                   |
+   | --------------------- | ---------------------------------------- |
+   | `4242 4242 4242 4242` | Paid; the booking is confirmed           |
+   | `4000 0000 0000 0002` | Declined; Stripe shows the error         |
+   | `4000 0025 0000 3155` | Asks for 3D Secure authentication        |
+
+4. The `stripe listen` terminal shows `checkout.session.completed` with a
+   `200` from the app.
+
+The success page also confirms the booking from the Checkout Session, so a
+booking completes even if the webhook is slow; both paths are idempotent.
+Lapsed holds are released by `GET /api/cron/expire-holds` (schedule it, for
+example every 10 minutes, with `Authorization: Bearer $CRON_SECRET`).
 
 ## Other commands
 

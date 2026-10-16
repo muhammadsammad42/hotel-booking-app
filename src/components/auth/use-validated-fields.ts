@@ -31,7 +31,7 @@ export function useValidatedFields<Schema extends z.ZodObject>(schema: Schema, i
     return {
       name,
       value: values[name] as string,
-      onChange: (event: React.ChangeEvent<HTMLInputElement>) => {
+      onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const value = event.target.value;
         setValues((current) => ({ ...current, [name]: value }));
         if (touched[name]) setErrors((current) => ({ ...current, [name]: validateField(name, value) }));
