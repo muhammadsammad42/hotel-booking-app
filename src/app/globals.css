@@ -365,3 +365,17 @@
   background-size: 200% 100%;
   animation: var(--animate-shimmer);
 }
+
+/* Printing (receipts): plain white paper, no toasts, sensible margins. */
+@media print {
+  @page {
+    margin: 16mm;
+  }
+  html,
+  body {
+    background: #fff;
+  }
+  [data-sonner-toaster] {
+    display: none !important;
+  }
+}

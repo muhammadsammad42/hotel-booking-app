@@ -18,8 +18,8 @@ This file is updated at the end of every phase.
 | 5  | Public browsing                       | Done        |
 | 6  | Availability + pricing engine         | Done        |
 | 7  | Booking + Stripe payments             | Done        |
-| 8  | Guest account                         | Next        |
-| 9  | Admin dashboard                       | Not started |
+| 8  | Guest account                         | Done        |
+| 9  | Admin dashboard                       | Next        |
 | 10 | Production readiness + tests + deploy | Not started |
 | 11 | Final UI/UX polish                    | Not started |
 
@@ -59,6 +59,22 @@ This file is updated at the end of every phase.
   confirm through the same idempotent function in
   `src/lib/booking/holds.ts`; a payment that arrives after the hold lapsed
   is confirmed if the rooms are still free and refunded otherwise.
+- **Account:** `/account/trips`, `/account/trips/[id]`, `/account/wishlist`
+  and `/account/profile`. Queries are always scoped by the signed-in user id
+  (`src/lib/account/trips.ts`); another guest's booking is a 404.
+  Cancellation and refunds live in `src/lib/booking/cancellation.ts`: the
+  booking row is locked while Stripe refunds, so a booking is only marked
+  cancelled once its refund exists. Time rules (cancellation deadline, trip
+  tabs) are pure functions in `src/lib/booking/policy.ts`.
+- **Email:** optional, through the Resend HTTP API (`src/lib/email`). With
+  `RESEND_API_KEY` set, confirmation and cancellation emails are sent after
+  the response (`after()`), with idempotency keys; without it nothing is sent
+  and the UI does not mention email.
+- **Avatars:** resized in the browser to a 256px square and stored in the
+  `UserAvatar` table; `User.image` is a short versioned URL
+  (`/api/avatars/[userId]?v=...`), so the session cookie stays small. After a
+  profile change the session is re-issued with the name and photo re-read
+  from the database.
 - **Search:** filters live in the URL (`src/lib/search/params.ts`), so
   results can be shared and restored. Destination, stars, amenities and
   guests filter in the database; price and rating are applied in memory.
@@ -141,6 +157,7 @@ src/components     Shared React components
   motion/          Animation helpers
   design/          Demos used only by the /design page
   auth/            Sign-in and sign-up forms
+  account/         Trips, trip page, receipt, reviews, wishlist, profile
   booking/         Booking pieces shared by several pages
   home/            Home page sections
   hotel/           Hotel cards, hotel page and the booking card
@@ -265,9 +282,35 @@ lists every variable the app needs.
 - Not done: confirmation emails (Resend skipped for now), and scheduling the
   clean-up route (phase 10).
 
-### 8. Guest account
+### 8. Guest account (done)
 
-Upcoming and past bookings, booking detail, cancellation, reviews.
+- `/account` area with a sliding tab bar (Trips, Wishlist, Profile) and
+  skeletons for every page.
+- My trips: next-trip hero over the hotel photo with a live countdown to
+  check-in (or "You are staying at" during a stay), and Upcoming / Past /
+  Cancelled tabs with a sliding chip, a fade on switch and the tab kept in
+  `?tab=`. Photo cards with status badges and a contextual note (in N days,
+  rate your stay, refunded amount).
+- Trip page: status banner, stay and guest details, directions, full price
+  breakdown with payments and refunds, `.ics` download and a print-friendly
+  receipt (print shows only the receipt on white paper).
+- Cancellation: guests can cancel confirmed bookings until
+  `BOOKING_CONFIG.cancellationHours` (48) before check-in, with a confirmation
+  dialog; the payment is refunded through Stripe (test mode) and the booking
+  and payment are marked cancelled and refunded. Seed payments, which never
+  existed in Stripe, are marked refunded without calling Stripe.
+- Reviews: once per completed stay, overall stars plus cleanliness,
+  location, value and service, and an optional comment; shown on the hotel
+  page straight away.
+- Wishlist moved to `/account/wishlist` (`/wishlist` redirects): removing a
+  stay animates it out and offers Undo in a toast.
+- Profile: name, photo (drag and drop or choose; cropped and resized in the
+  browser, checked again on the server) and password change.
+- Booking confirmation and cancellation emails when `RESEND_API_KEY` is set.
+- New migration: `UserAvatar`.
+- Not done: changing the sign-in email (needs email verification), and
+  deleting an account (bookings are kept as financial records, so this needs
+  an anonymisation step).
 
 ### 9. Admin dashboard
 

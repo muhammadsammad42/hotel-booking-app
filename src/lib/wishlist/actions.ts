@@ -35,6 +35,6 @@ export async function setWishlisted(input: { hotelId: string; saved: boolean }):
     return { ok: false, reason: "error" };
   }
 
-  revalidatePath("/wishlist");
+  revalidatePath("/account/wishlist");
   return { ok: true, saved };
 }

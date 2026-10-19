@@ -18,6 +18,8 @@ type WishlistButtonProps = {
   signedIn: boolean;
   /** `overlay` sits on a photo; `outline` sits on the page. */
   variant?: "overlay" | "outline";
+  /** Hands the click to the parent instead, e.g. the wishlist page with its undo. */
+  onToggle?: () => void;
   className?: string;
 };
 
@@ -33,6 +35,7 @@ export function WishlistButton({
   initialSaved,
   signedIn,
   variant = "overlay",
+  onToggle,
   className,
 }: WishlistButtonProps) {
   const router = useRouter();
@@ -52,6 +55,11 @@ export function WishlistButton({
     // The button sits inside a card whose link covers it.
     event.preventDefault();
     event.stopPropagation();
+
+    if (onToggle) {
+      onToggle();
+      return;
+    }
 
     if (!signedIn) {
       toast("Sign in to save stays", {
@@ -73,7 +81,7 @@ export function WishlistButton({
       }
       toast.success(next ? "Saved to your wishlist" : "Removed from your wishlist", {
         description: hotelName,
-        action: next ? { label: "View", onClick: () => router.push("/wishlist") } : undefined,
+        action: next ? { label: "View", onClick: () => router.push("/account/wishlist") } : undefined,
       });
       router.refresh();
     });

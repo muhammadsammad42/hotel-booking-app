@@ -10,7 +10,7 @@ export const site = {
 export const mainNav = [
   { href: "/search", label: "Stays" },
   { href: "/destinations", label: "Destinations" },
-  { href: "/wishlist", label: "Wishlist" },
+  { href: "/account/wishlist", label: "Wishlist" },
 ] as const;
 
 export const footerNav = [
@@ -19,7 +19,7 @@ export const footerNav = [
     links: [
       { href: "/search", label: "All stays" },
       { href: "/destinations", label: "Destinations" },
-      { href: "/wishlist", label: "Your wishlist" },
+      { href: "/account/wishlist", label: "Your wishlist" },
     ],
   },
   {

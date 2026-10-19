@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboardIcon, LogOutIcon, LuggageIcon, MenuIcon, SearchIcon } from "lucide-react";
+import { LayoutDashboardIcon, LogOutIcon, LuggageIcon, MenuIcon, SearchIcon, UserRoundIcon } from "lucide-react";
 
 import { Logo } from "@/components/brand/logo";
 import { PageContainer } from "@/components/layout/page-container";
@@ -50,7 +50,7 @@ function SiteHeader({ user }: { user: CurrentUser | null }) {
     <header
       data-scrolled={scrolled}
       className={cn(
-        "sticky top-0 z-40 h-header border-b border-transparent",
+        "sticky top-0 z-40 h-header border-b border-transparent print:hidden",
         "transition-[background-color,border-color,box-shadow] duration-200 ease-soft",
         "data-[scrolled=true]:border-border data-[scrolled=true]:bg-background/92 data-[scrolled=true]:shadow-xs data-[scrolled=true]:backdrop-blur-md",
       )}
@@ -120,6 +120,7 @@ function MobileMenu({
   const handleSignOut = useSignOut();
   const accountLinks = [
     { href: "/account/trips", label: "My trips", icon: LuggageIcon },
+    { href: "/account/profile", label: "Profile", icon: UserRoundIcon },
     ...(user?.role === "ADMIN" ? [{ href: "/admin", label: "Admin dashboard", icon: LayoutDashboardIcon }] : []),
   ];
 

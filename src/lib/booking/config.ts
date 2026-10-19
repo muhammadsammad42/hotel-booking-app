@@ -16,6 +16,11 @@ export const BOOKING_CONFIG = {
    * expires with the hold.
    */
   holdMinutes: 30,
+  /**
+   * Guests can cancel a confirmed booking for a full refund until this many
+   * hours before check-in. Admins can cancel at any time.
+   */
+  cancellationHours: 48,
   /** Rooms left at which the "Only N left" badge appears. */
   lowAvailability: 2,
   currency: "USD",

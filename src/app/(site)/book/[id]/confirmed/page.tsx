@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { CalendarPlusIcon, CheckIcon, CircleCheckIcon, LuggageIcon, MapPinIcon } from "lucide-react";
 
 import { Confetti } from "@/components/booking/confetti";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import { confirmFromSession } from "@/lib/booking/holds";
+import { emailEnabled, sendBookingConfirmedEmail } from "@/lib/email";
 import { bookingQuote } from "@/lib/booking/snapshot";
 import { formatPrice, formatStayDate, pluralize } from "@/lib/format";
 import { prisma } from "@/lib/prisma";
@@ -38,7 +40,9 @@ export default async function ConfirmedPage({ params, searchParams }: PageProps<
   if (!paidStatuses.includes(booking.status) && typeof sessionId === "string" && sessionId.startsWith("cs_")) {
     try {
       const session = await getStripe().checkout.sessions.retrieve(sessionId);
-      if (session.metadata?.bookingId === booking.id) await confirmFromSession(session);
+      if (session.metadata?.bookingId === booking.id && (await confirmFromSession(session)) === "confirmed") {
+        after(() => sendBookingConfirmedEmail(booking.id));
+      }
       booking = await getOwnBooking(id, `/book/${id}/confirmed`);
     } catch (error) {
       console.error("[booking] Could not confirm from session:", error);
@@ -111,7 +115,10 @@ export default async function ConfirmedPage({ params, searchParams }: PageProps<
               <div>
                 <h1 className="type-title-lg">Pack your bags, {firstName}. You are going to {hotel.city}.</h1>
                 <p className="mt-1 text-muted-foreground">
-                  Your stay at {hotel.name} is confirmed. Everything you need is below, and in My trips whenever you need it.
+                  Your stay at {hotel.name} is confirmed.{" "}
+                  {emailEnabled()
+                    ? `We have emailed a confirmation to ${booking.guestEmail}.`
+                    : "Everything you need is below, and in My trips whenever you need it."}
                 </p>
               </div>
             </div>

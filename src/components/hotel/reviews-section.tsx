@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RatingStars } from "@/components/ui/rating-stars";
 import type { HotelDetail } from "@/lib/catalog/hotels";
 import { initials } from "@/lib/format";
@@ -70,6 +70,7 @@ export function ReviewsSection({ hotel }: { hotel: HotelDetail }) {
             <article className="grid gap-3">
               <header className="flex items-center gap-3">
                 <Avatar>
+                  {review.user.image && <AvatarImage src={review.user.image} alt="" />}
                   <AvatarFallback className="bg-primary/15 font-semibold text-primary">
                     {initials(review.user.name)}
                   </AvatarFallback>

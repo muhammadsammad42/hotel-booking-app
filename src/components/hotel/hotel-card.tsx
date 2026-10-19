@@ -27,6 +27,8 @@ type HotelCardProps = {
   /** Image proportions: tall on editorial grids, wider in search results. */
   aspect?: "portrait" | "landscape";
   sizes?: string;
+  /** Passed to the wishlist heart; see WishlistButton. */
+  onWishlistToggle?: () => void;
 };
 
 /** A hotel in a grid or carousel: swipeable photos, wishlist heart, rating, price. */
@@ -41,6 +43,7 @@ export function HotelCard({
   priority = false,
   aspect = "portrait",
   sizes = "(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw",
+  onWishlistToggle,
 }: HotelCardProps) {
   const [emblaRef, embla] = useEmblaCarousel({ loop: hotel.images.length > 1 });
   const [index, setIndex] = React.useState(0);
@@ -106,7 +109,13 @@ export function HotelCard({
             <span />
           )}
           <span className="pointer-events-auto">
-            <WishlistButton hotelId={hotel.id} hotelName={hotel.name} initialSaved={saved} signedIn={signedIn} />
+            <WishlistButton
+              hotelId={hotel.id}
+              hotelName={hotel.name}
+              initialSaved={saved}
+              signedIn={signedIn}
+              onToggle={onWishlistToggle}
+            />
           </span>
         </div>
 

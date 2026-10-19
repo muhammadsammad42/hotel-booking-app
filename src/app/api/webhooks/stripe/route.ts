@@ -1,6 +1,8 @@
+import { after } from "next/server";
 import type Stripe from "stripe";
 
 import { confirmFromSession, expireFromSession } from "@/lib/booking/holds";
+import { sendBookingConfirmedEmail } from "@/lib/email";
 import { getStripe } from "@/lib/stripe";
 
 const SETUP_HINT =
@@ -39,6 +41,9 @@ export async function POST(request: Request) {
       case "checkout.session.completed":
       case "checkout.session.async_payment_succeeded": {
         const result = await confirmFromSession(event.data.object);
+        // Only the call that confirms the booking sends the email.
+        const bookingId = event.data.object.metadata?.bookingId;
+        if (result === "confirmed" && bookingId) after(() => sendBookingConfirmedEmail(bookingId));
         console.info(`[stripe webhook] ${event.type} ${event.data.object.id}: ${result}`);
         break;
       }

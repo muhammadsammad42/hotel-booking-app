@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import type { BookingStatus } from "@/generated/prisma/client";
 
-const statuses: Record<BookingStatus, { label: string; variant: React.ComponentProps<typeof Badge>["variant"] }> = {
+export const BOOKING_STATUSES: Record<BookingStatus, { label: string; variant: React.ComponentProps<typeof Badge>["variant"] }> = {
   PENDING: { label: "Awaiting payment", variant: "warning" },
   CONFIRMED: { label: "Confirmed", variant: "success" },
   CHECKED_IN: { label: "Checked in", variant: "primary" },
@@ -10,7 +10,11 @@ const statuses: Record<BookingStatus, { label: string; variant: React.ComponentP
   EXPIRED: { label: "Expired", variant: "outline" },
 };
 
-export function BookingStatusBadge({ status }: { status: BookingStatus }) {
-  const { label, variant } = statuses[status];
-  return <Badge variant={variant}>{label}</Badge>;
+export function BookingStatusBadge({ status, className }: { status: BookingStatus; className?: string }) {
+  const { label, variant } = BOOKING_STATUSES[status];
+  return (
+    <Badge variant={variant} className={className}>
+      {label}
+    </Badge>
+  );
 }

@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
     loader: "custom",
     loaderFile: "./src/lib/image-loader.ts",
   },
+  async redirects() {
+    // The wishlist moved into the account area in phase 8.
+    return [{ source: "/wishlist", destination: "/account/wishlist", permanent: true }];
+  },
 };
 
 export default nextConfig;

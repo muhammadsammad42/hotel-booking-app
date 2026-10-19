@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { HeartIcon, LayoutDashboardIcon, LogOutIcon, LuggageIcon, MoonIcon, SunIcon } from "lucide-react";
+import { HeartIcon, LayoutDashboardIcon, LogOutIcon, LuggageIcon, MoonIcon, SunIcon, UserRoundIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
@@ -70,9 +70,15 @@ export function UserMenu({ user }: { user: CurrentUser }) {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/wishlist">
+            <Link href="/account/wishlist">
               <HeartIcon aria-hidden />
               Wishlist
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/account/profile">
+              <UserRoundIcon aria-hidden />
+              Profile
             </Link>
           </DropdownMenuItem>
           {user.role === "ADMIN" && (

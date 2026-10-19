@@ -25,7 +25,7 @@ export async function GET(_request: Request, { params }: RouteContext<"/book/[id
     checkOut: toIso(booking.checkOut),
     checkInTime: booking.roomType.hotel.checkInTime,
     guests: booking.guests,
-    url: `${await siteOrigin()}/account/trips`,
+    url: `${await siteOrigin()}/account/trips/${booking.id}`,
     now: new Date(),
   });
 

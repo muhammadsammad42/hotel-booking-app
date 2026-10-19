@@ -47,6 +47,8 @@ system is documented in [docs/DESIGN.md](docs/DESIGN.md) and shown live at
    | `STRIPE_WEBHOOK_SECRET` | Webhook signing secret (`whsec_...`, see below)            |
    | `APP_URL`               | Public URL of the site (optional locally)                  |
    | `CRON_SECRET`           | Protects the hold clean-up route (required in production)  |
+   | `RESEND_API_KEY`        | Optional. Sends booking and cancellation emails            |
+   | `EMAIL_FROM`            | Sender for those emails, on a domain verified in Resend    |
 
 3. Create the database tables and load the demo data:
 

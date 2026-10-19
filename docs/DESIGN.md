@@ -212,6 +212,7 @@ Small sizes grow to 44px on touch screens automatically.
 | `DateRangePicker` | Check-in and check-out | Popover with two months on desktop, bottom sheet with one month on mobile. `minNights`, `maxNights` and `unavailable` limit the selection. |
 | `Calendar` | Other date needs | The month grid behind `DateRangePicker`. |
 | `StayDatePicker` | Dates on a hotel page | `DateRangePicker` with prices under each date, cheaper dates in green and sold-out nights struck through. |
+| `StarInput` | Giving a 1-5 rating | Native radio buttons, so arrow keys and screen readers work; stars fill on hover. |
 | `PriceBreakdown` | Any price of a stay | Nightly rate, taxes, service fee and total, with amounts that roll when they change. |
 
 Validate with Zod on the server and show the message through `Field`'s
@@ -234,6 +235,7 @@ Validate with Zod on the server and show the message through `Field`'s
 | Component | Use it for | Notes |
 | --- | --- | --- |
 | `Tabs` | Switching views in place | `underline` (default) on editorial pages; `variant="segmented"` on app screens. |
+| `AnimatedTabs` | Tabbed lists on app screens | Segmented, with a sliding chip, a fade on switch (not on first render) and the tab kept in a query parameter. |
 | `Stepper` | The booking flow | Shows only the current label on small screens. |
 | `SiteHeader`, `SiteFooter` | The app shell | Rendered once in the root layout. The header is transparent at the top and solid once scrolled. |
 | `PageContainer`, `Section` | Page layout | See "Two registers". |
@@ -260,6 +262,8 @@ returns to the trigger.
 | `StaySummary` | The stay being booked | Hotel photo, room, dates, guests and `PriceBreakdown`; sticky on desktop. |
 | `HoldCountdown` | Pending bookings | Turns amber in the last five minutes and refreshes the page when the hold ends. |
 | `CopyButton` | Booking references | Confirms with a tick and a toast. |
+| `TripCard`, `NextTrip` | My trips | A booking as a photo card; the next trip as a hero with a live countdown. |
+| `Receipt` | Printing a booking | Hidden on screen. Print styles hide the rest of the page and print black on white. |
 | `Confetti` | The confirmation page only | A short burst; skipped when the system asks for less motion. |
 
 ### States
