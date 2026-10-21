@@ -1,3 +1,5 @@
+import { cache } from "react";
+
 import type { Prisma } from "@/generated/prisma/client";
 import { getRoomStays } from "@/lib/booking/data";
 import { prisma } from "@/lib/prisma";
@@ -257,8 +259,11 @@ export async function getTestimonials(limit = 6) {
   return reviews.filter((review) => !seen.has(review.hotel.slug) && seen.add(review.hotel.slug)).slice(0, limit);
 }
 
-/** Everything the hotel page shows, or null if there is no such active hotel. */
-export async function getHotelBySlug(slug: string) {
+/**
+ * Everything the hotel page shows, or null if there is no such active hotel.
+ * Cached per request, so the page, its metadata and its image share one query.
+ */
+export const getHotelBySlug = cache(async function getHotelBySlug(slug: string) {
   const hotel = await prisma.hotel.findFirst({
     where: { slug, isActive: true },
     include: {
@@ -311,7 +316,7 @@ export async function getHotelBySlug(slug: string) {
       count: reviews.filter((review) => review.rating === stars).length,
     })),
   };
-}
+});
 
 export type HotelDetail = NonNullable<Awaited<ReturnType<typeof getHotelBySlug>>>;
 

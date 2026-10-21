@@ -2,6 +2,7 @@
 
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { clientIp, hit, LIMITS } from "@/lib/rate-limit";
 import { fieldErrors, registerSchema, type FieldErrors, type RegisterInput } from "@/lib/validation/auth";
 
 export type RegisterResult =
@@ -15,6 +16,9 @@ export type RegisterResult =
 export async function registerAction(input: RegisterInput): Promise<RegisterResult> {
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
+
+  const limited = await hit(`register:ip:${await clientIp()}`, LIMITS.register);
+  if (!limited.ok) return { ok: false, formError: "Too many accounts were created from this network recently. Please try again in an hour." };
 
   const { name, email, password } = parsed.data;
   const existing = await prisma.user.findUnique({ where: { email }, select: { id: true } });

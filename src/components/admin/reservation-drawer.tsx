@@ -13,6 +13,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Sheet, SheetBody, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { Reservation } from "@/lib/admin/reservations";
 import { formatPrice, formatStayDate, pluralize } from "@/lib/format";
+import { safe } from "@/lib/safe-action";
 
 import { StayActions } from "./stay-actions";
 
@@ -38,7 +39,7 @@ function CancelButton({ booking, onDone }: { booking: Reservation; onDone: () =>
   function confirm() {
     setError(undefined);
     startTransition(async () => {
-      const result = await adminCancelBookingAction(booking.id);
+      const result = await safe(adminCancelBookingAction(booking.id));
       if (!result.ok) {
         setError(result.formError);
         return;

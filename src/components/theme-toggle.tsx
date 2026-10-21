@@ -1,10 +1,10 @@
 "use client";
 
 import { MoonIcon, SunIcon } from "lucide-react";
-import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/components/theme-provider";
 
 /** Switches between the light and dark themes. */
 function ThemeToggle({ className }: { className?: string }) {

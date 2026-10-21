@@ -8,6 +8,7 @@ import * as m from "motion/react-m";
 import { toast } from "sonner";
 
 import { loginPath } from "@/lib/auth/redirect";
+import { safe } from "@/lib/safe-action";
 import { cn } from "@/lib/utils";
 import { setWishlisted } from "@/lib/wishlist/actions";
 
@@ -73,7 +74,7 @@ export function WishlistButton({
     setSaved(next);
     if (next) setPulse((value) => value + 1);
     startTransition(async () => {
-      const result = await setWishlisted({ hotelId, saved: next });
+      const result = await safe(setWishlisted({ hotelId, saved: next }));
       if (!result.ok) {
         setSaved(!next);
         toast.error("We could not update your wishlist", { description: "Please try again." });

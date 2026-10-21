@@ -1,9 +1,10 @@
-import NextAuth from "next-auth";
+import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { clear, hit, ipFrom, LIMITS } from "@/lib/rate-limit";
 import { loginSchema } from "@/lib/validation/auth";
 
 import { authConfig } from "./config";
@@ -11,6 +12,11 @@ import { authConfig } from "./config";
 // Compared against when the email is unknown, so a wrong email takes as long
 // to reject as a wrong password and does not reveal which accounts exist.
 const timingSafeDummyHash = hashPassword("sarai-timing-placeholder");
+
+/** Shown by the sign-in form as "too many attempts". */
+class TooManyAttempts extends CredentialsSignin {
+  code = "rate_limited";
+}
 
 export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
   ...authConfig,
@@ -42,14 +48,23 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials) {
+      async authorize(credentials, request) {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
+
+        // Slow down password guessing, per account and per address.
+        const emailKey = `login:email:${parsed.data.email}`;
+        const [byEmail, byIp] = await Promise.all([
+          hit(emailKey, LIMITS.loginByEmail),
+          hit(`login:ip:${ipFrom(request.headers)}`, LIMITS.loginByIp),
+        ]);
+        if (!byEmail.ok || !byIp.ok) throw new TooManyAttempts();
 
         const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
         const hash = user?.passwordHash ?? (await timingSafeDummyHash);
         const valid = await verifyPassword(parsed.data.password, hash);
         if (!user?.passwordHash || !valid) return null;
+        await clear(emailKey);
 
         return { id: user.id, name: user.name, email: user.email, image: user.image, role: user.role };
       },

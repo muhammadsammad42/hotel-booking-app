@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { safe } from "@/lib/safe-action";
 import { roomTypeSchema, slugify } from "@/lib/validation/admin";
 
 import type { RoomTypeFormValues } from "@/lib/admin/form-values";
@@ -79,7 +80,7 @@ export function RoomTypeForm({
       return;
     }
     startTransition(async () => {
-      const result = await saveRoomTypeAction(hotelId, values, roomTypeId);
+      const result = await safe(saveRoomTypeAction(hotelId, values, roomTypeId));
       if (!result.ok) {
         setErrors((result.fieldErrors as Record<string, string>) ?? {});
         setFormError(result.formError);

@@ -1,12 +1,12 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
+import { databaseUrl } from "@/lib/db-url";
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
 
 function createPrismaClient() {
   // Prefer the pooled connection at runtime; fall back to the direct one.
-  const connectionString =
-    process.env.DATABASE_URL_POOLED ?? process.env.DATABASE_URL;
+  const connectionString = databaseUrl(process.env.DATABASE_URL_POOLED ?? process.env.DATABASE_URL);
 
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set. Copy .env.example to .env.");

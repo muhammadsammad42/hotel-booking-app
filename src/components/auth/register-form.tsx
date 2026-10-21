@@ -13,6 +13,7 @@ import { useValidatedFields } from "@/components/auth/use-validated-fields";
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { safe } from "@/lib/safe-action";
 import { registerSchema } from "@/lib/validation/auth";
 
 export function RegisterForm({ callbackUrl }: { callbackUrl: string }) {
@@ -32,7 +33,7 @@ export function RegisterForm({ callbackUrl }: { callbackUrl: string }) {
     if (!data) return;
 
     setPending(true);
-    const result = await registerAction(data);
+    const result = await safe(registerAction(data));
     if (!result.ok) {
       setPending(false);
       if (result.fieldErrors) setErrors(result.fieldErrors);
@@ -40,7 +41,7 @@ export function RegisterForm({ callbackUrl }: { callbackUrl: string }) {
       return;
     }
 
-    const signedIn = await signIn("credentials", { email: data.email, password: data.password, redirect: false });
+    const signedIn = await signIn("credentials", { email: data.email, password: data.password, redirect: false }).catch(() => undefined);
     if (!signedIn || signedIn.error) {
       // The account exists; let the guest sign in by hand.
       router.replace(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`);

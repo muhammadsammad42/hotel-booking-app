@@ -66,7 +66,7 @@ export function ImageManager({ images, onChange, max, uploadsEnabled, error, ite
   async function upload(files: FileList | File[]) {
     const list = Array.from(files).filter((file) => file.type.startsWith("image/")).slice(0, max - images.length);
     if (!list.length) return;
-    const signature = await uploadSignatureAction();
+    const signature = await uploadSignatureAction().catch(() => ({ enabled: false }) as const);
     if (!signature.enabled) {
       toast.error("Uploads are not set up", { description: "Add the Cloudinary keys to .env, or add photos by URL." });
       return;

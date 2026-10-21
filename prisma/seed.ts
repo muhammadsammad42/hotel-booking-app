@@ -11,6 +11,7 @@ import {
   type PaymentStatus,
 } from "../src/generated/prisma/client";
 import { quote } from "../src/lib/booking/engine";
+import { databaseUrl } from "../src/lib/db-url";
 import { hashPassword } from "../src/lib/password";
 import { amenities } from "./seed-data/amenities";
 import { hotels, type SeedHotel } from "./seed-data/hotels";
@@ -22,7 +23,7 @@ const DAY_MS = 86_400_000;
 
 // Migrations and seeding use the direct connection, like the Prisma CLI.
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  adapter: new PrismaPg({ connectionString: databaseUrl(process.env.DATABASE_URL) }),
 });
 
 // --- Helpers ---------------------------------------------------------------

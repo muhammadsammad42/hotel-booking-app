@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { StarInput } from "@/components/ui/star-input";
 import { Textarea } from "@/components/ui/textarea";
+import { safe } from "@/lib/safe-action";
 import { REVIEW_COMMENT_MAX, type ReviewInput } from "@/lib/validation/account";
 import type { FieldErrors } from "@/lib/validation/auth";
 
@@ -48,7 +49,7 @@ export function ReviewForm({ bookingId, hotelName }: { bookingId: string; hotelN
     }
 
     startTransition(async () => {
-      const result = await submitReviewAction({ bookingId, ...scores, comment });
+      const result = await safe(submitReviewAction({ bookingId, ...scores, comment }));
       if (!result.ok) {
         if (result.fieldErrors) setErrors(result.fieldErrors);
         if (result.formError) setFormError(result.formError);

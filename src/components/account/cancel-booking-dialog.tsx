@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { safe } from "@/lib/safe-action";
 
 type CancelBookingDialogProps = {
   bookingId: string;
@@ -35,7 +36,7 @@ export function CancelBookingDialog({ bookingId, hotelName, refund, deadline }: 
   function confirm() {
     setError(undefined);
     startTransition(async () => {
-      const result = await cancelBookingAction(bookingId);
+      const result = await safe(cancelBookingAction(bookingId));
       if (!result.ok) {
         setError(result.formError);
         return;

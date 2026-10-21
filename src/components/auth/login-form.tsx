@@ -27,10 +27,19 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
     if (!data) return;
 
     setPending(true);
-    const result = await signIn("credentials", { ...data, redirect: false });
+    const result = await signIn("credentials", { ...data, redirect: false }).catch(() => "offline" as const);
+    if (result === "offline") {
+      setPending(false);
+      setFormError("We could not reach Sarai. Check your connection and try again.");
+      return;
+    }
     if (!result || result.error) {
       setPending(false);
-      setFormError("That email and password do not match an account. Check them and try again.");
+      setFormError(
+        result?.code === "rate_limited"
+          ? "Too many sign-in attempts. For your security, wait 15 minutes and try again."
+          : "That email and password do not match an account. Check them and try again.",
+      );
       return;
     }
 

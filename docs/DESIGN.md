@@ -94,8 +94,10 @@ and lines only.
 
 ### Dark mode
 
-`next-themes` puts `.dark` on `<html>`; the default follows the system
-setting, and `ThemeToggle` switches it. Components read tokens, so they adapt
+`ThemeProvider` (`src/components/theme-provider.tsx`) puts `.dark` or
+`.light` on `<html>`, set before first paint by a small script in the root
+layout; the default follows the system setting, and `ThemeToggle` switches
+it. Use `useTheme()` from that file. Components read tokens, so they adapt
 without `dark:` classes. Use a `dark:` class only for something a token cannot
 express, such as swapping an icon. Adding `.light` or `.dark` to any element
 forces that theme on its subtree; `/design` uses this for its side-by-side

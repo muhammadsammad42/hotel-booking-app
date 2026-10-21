@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { safe } from "@/lib/safe-action";
 import { cn } from "@/lib/utils";
 import { AMENITY_CATEGORIES, amenitySchema, type AmenityInput } from "@/lib/validation/admin";
 
@@ -57,7 +58,7 @@ function AmenityDialog({
       return;
     }
     startTransition(async () => {
-      const result = await saveAmenityAction(values, amenity?.id);
+      const result = await safe(saveAmenityAction(values, amenity?.id));
       if (!result.ok) {
         setErrors(result.fieldErrors ?? {});
         setFormError(result.formError);
@@ -158,7 +159,7 @@ export function AmenityManager({ amenities, iconKeys }: { amenities: AmenityRow[
     setDeleting(null);
     startTransition(async () => {
       removeOptimistic(target.id);
-      const result = await deleteAmenityAction(target.id);
+      const result = await safe(deleteAmenityAction(target.id));
       if (!result.ok) {
         toast.error("Nothing was deleted", { description: result.formError });
         return;

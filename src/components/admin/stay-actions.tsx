@@ -9,6 +9,7 @@ import { setStayStatusAction } from "@/app/(admin)/admin/_actions/reservations";
 import { BookingStatusBadge } from "@/components/booking/booking-status-badge";
 import { Button } from "@/components/ui/button";
 import type { BookingStatus } from "@/generated/prisma/client";
+import { safe } from "@/lib/safe-action";
 
 /**
  * Check in or check out. The badge flips at once (optimistic) and rolls back
@@ -38,7 +39,7 @@ export function StayActions({
   function run(next: "CHECKED_IN" | "CHECKED_OUT") {
     startTransition(async () => {
       setOptimistic(next);
-      const result = await setStayStatusAction(bookingId, next);
+      const result = await safe(setStayStatusAction(bookingId, next));
       if (!result.ok) {
         toast.error("Could not update the stay", { description: result.formError });
         return;

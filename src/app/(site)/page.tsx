@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRightIcon, BadgeCheckIcon, GemIcon, QuoteIcon, ReceiptTextIcon, ShieldCheckIcon } from "lucide-react";
@@ -11,6 +12,10 @@ import { Button } from "@/components/ui/button";
 import { RatingStars } from "@/components/ui/rating-stars";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getDestinationSuggestions, getDestinations, getTestimonials, getTrendingHotels } from "@/lib/catalog/hotels";
+
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 import { getWishlistIds } from "@/lib/wishlist/queries";
 
 const reasons = [

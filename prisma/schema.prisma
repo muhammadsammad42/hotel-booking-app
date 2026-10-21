@@ -294,6 +294,10 @@ model Booking {
   @@index([roomTypeId, checkIn, checkOut])
   @@index([status, expiresAt])
   @@index([userId, createdAt])
+  // Admin: newest first, bookings made per month, arrivals and departures.
+  @@index([createdAt])
+  @@index([checkIn])
+  @@index([checkOut])
 }
 
 model Payment {
@@ -311,6 +315,8 @@ model Payment {
   booking Booking @relation(fields: [bookingId], references: [id], onDelete: Restrict)
 
   @@index([bookingId])
+  // Admin: revenue received per period.
+  @@index([status, paidAt])
 }
 
 // ---------------------------------------------------------------------------
@@ -350,4 +356,19 @@ model Wishlist {
 
   @@id([userId, hotelId])
   @@index([hotelId])
+}
+
+// ---------------------------------------------------------------------------
+// Rate limiting
+// ---------------------------------------------------------------------------
+
+// A fixed-window counter per key, e.g. "login:ip:203.0.113.7". Kept in
+// Postgres so limits hold across serverless instances. Old rows are cleared
+// by the cron route.
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+
+  @@index([resetAt])
 }

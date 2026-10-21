@@ -30,7 +30,9 @@ export async function generateMetadata({ params }: PageProps<"/hotels/[slug]">):
   return {
     title: `${hotel.name}, ${hotel.city}`,
     description,
-    openGraph: { title: hotel.name, description, images: [{ url: hotel.coverImageUrl, alt: hotel.coverImageAlt }] },
+    alternates: { canonical: `/hotels/${hotel.slug}` },
+    // The image comes from opengraph-image.tsx next to this page.
+    openGraph: { title: `${hotel.name} · ${hotel.city}`, description, type: "website" },
   };
 }
 

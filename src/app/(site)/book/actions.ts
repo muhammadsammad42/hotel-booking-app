@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth/guards";
 import { BookingError, checkoutSessionFor, createHold } from "@/lib/booking/holds";
 import { STAY_ERROR_MESSAGES, todayIso, validateStay } from "@/lib/booking/stay";
 import { prisma } from "@/lib/prisma";
+import { hit, LIMITS, waitText } from "@/lib/rate-limit";
 import { siteOrigin } from "@/lib/site-url";
 import { bookingSubmissionSchema, type BookingSubmission, type GuestDetails } from "@/lib/validation/booking";
 
@@ -25,6 +26,11 @@ export type CreateBookingResult =
 export async function createBookingAction(input: BookingSubmission): Promise<CreateBookingResult> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, formError: "Your session has ended. Sign in again to continue." };
+
+  const limited = await hit(`booking:user:${user.id}`, LIMITS.booking);
+  if (!limited.ok) {
+    return { ok: false, formError: `You have started a lot of bookings in a short time. Please wait ${waitText(limited.retryAfter)} and try again.` };
+  }
 
   const parsed = bookingSubmissionSchema.safeParse(input);
   if (!parsed.success) {

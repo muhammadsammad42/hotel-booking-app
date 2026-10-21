@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { safe } from "@/lib/safe-action";
 import { guestDetailsSchema, type GuestDetails, type StayRequest } from "@/lib/validation/booking";
 
 type GuestDetailsFormProps = {
@@ -35,7 +36,7 @@ export function GuestDetailsForm({ stay, initial, backHref, total }: GuestDetail
     if (!guest) return;
 
     setPending(true);
-    const result = await createBookingAction({ ...stay, guest });
+    const result = await safe(createBookingAction({ ...stay, guest }));
     if (!result.ok) {
       setPending(false);
       if (result.fieldErrors) setErrors(result.fieldErrors);

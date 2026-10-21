@@ -10,6 +10,7 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { safe } from "@/lib/safe-action";
 import { hotelSchema, slugify } from "@/lib/validation/admin";
 
 import type { HotelFormValues } from "@/lib/admin/form-values";
@@ -78,7 +79,7 @@ export function HotelForm({
       return;
     }
     startTransition(async () => {
-      const result = await saveHotelAction(values, hotelId);
+      const result = await safe(saveHotelAction(values, hotelId));
       if (!result.ok) {
         setErrors((result.fieldErrors as Record<string, string>) ?? {});
         setFormError(result.formError);

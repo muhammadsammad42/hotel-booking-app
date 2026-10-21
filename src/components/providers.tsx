@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import { LazyMotion, MotionConfig, domAnimation } from "motion/react";
-import { ThemeProvider } from "next-themes";
 
+import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { duration, ease } from "@/lib/motion";
@@ -11,7 +11,7 @@ import { duration, ease } from "@/lib/motion";
 /** Client-side providers shared by every page. */
 function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+    <ThemeProvider>
       {/* LazyMotion keeps the animation code out of the initial bundle;
           reducedMotion="user" honours the system setting. */}
       <LazyMotion features={domAnimation} strict>

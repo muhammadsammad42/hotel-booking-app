@@ -8,6 +8,7 @@ import { setHotelActiveAction, setRoomTypeActiveAction } from "@/app/(admin)/adm
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
+import { safe } from "@/lib/safe-action";
 
 type ActiveSwitchProps = { kind: "hotel" | "room"; id: string; name: string; active: boolean };
 
@@ -26,7 +27,7 @@ export function ActiveSwitch({ kind, id, name, active }: ActiveSwitchProps) {
     setConfirming(false);
     startTransition(async () => {
       setOptimistic(next);
-      const result = kind === "hotel" ? await setHotelActiveAction(id, next) : await setRoomTypeActiveAction(id, next);
+      const result = await safe(kind === "hotel" ? setHotelActiveAction(id, next) : setRoomTypeActiveAction(id, next));
       if (!result.ok) {
         toast.error("Nothing changed", { description: result.formError });
         return;

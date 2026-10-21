@@ -7,8 +7,9 @@ import {
   Loader2Icon,
   TriangleAlertIcon,
 } from "lucide-react";
-import { useTheme } from "next-themes";
 import { Toaster as Sonner, type ToasterProps } from "sonner";
+
+import { useTheme } from "@/components/theme-provider";
 
 /** Toast host. Trigger toasts with `toast()` from "sonner". */
 function Toaster(props: ToasterProps) {

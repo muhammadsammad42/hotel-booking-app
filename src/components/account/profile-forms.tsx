@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { initials } from "@/lib/format";
+import { safe } from "@/lib/safe-action";
 import { cn } from "@/lib/utils";
 import { AVATAR_MAX_BYTES, passwordChangeSchema, profileSchema } from "@/lib/validation/account";
 
@@ -39,7 +40,7 @@ export function NameForm({ name }: { name: string }) {
     const data = validateAll();
     if (!data) return;
     startTransition(async () => {
-      const result = await updateProfileAction(data);
+      const result = await safe(updateProfileAction(data));
       if (!result.ok) {
         if (result.fieldErrors) setErrors(result.fieldErrors);
         setFormError(result.formError);
@@ -112,7 +113,7 @@ export function AvatarForm({ name, email, image }: { name: string | null; email:
         setPreview(URL.createObjectURL(blob));
         const formData = new FormData();
         formData.append("avatar", new File([blob], "avatar", { type: blob.type }));
-        const result = await uploadAvatarAction(formData);
+        const result = await safe(uploadAvatarAction(formData));
         if (!result.ok) {
           setPreview(null);
           setError(result.formError);
@@ -130,7 +131,7 @@ export function AvatarForm({ name, email, image }: { name: string | null; email:
   function remove() {
     setError(undefined);
     startTransition(async () => {
-      const result = await removeAvatarAction();
+      const result = await safe(removeAvatarAction());
       if (!result.ok) {
         setError(result.formError);
         return;
@@ -240,7 +241,7 @@ function PasswordFields({
     const data = validateAll();
     if (!data) return;
     startTransition(async () => {
-      const result = await changePasswordAction(data);
+      const result = await safe(changePasswordAction(data));
       if (!result.ok) {
         if (result.fieldErrors) setErrors(result.fieldErrors);
         setFormError(result.formError);

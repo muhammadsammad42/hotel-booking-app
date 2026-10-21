@@ -3,6 +3,8 @@ import { Fraunces, Instrument_Sans } from "next/font/google";
 
 import { Providers } from "@/components/providers";
 import { site } from "@/lib/site";
+import { publicSiteUrl } from "@/lib/site-url";
+import { THEME_SCRIPT } from "@/lib/theme";
 
 import "./globals.css";
 
@@ -30,6 +32,9 @@ export const metadata: Metadata = {
   },
   description: site.description,
   applicationName: site.name,
+  metadataBase: new URL(publicSiteUrl()),
+  openGraph: { type: "website", siteName: site.name, locale: "en_GB" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {
@@ -44,9 +49,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       className={`${fraunces.variable} ${instrumentSans.variable} h-full antialiased`}
-      // next-themes sets the theme class before hydration.
+      // THEME_SCRIPT sets the theme class before hydration.
       suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
+      </head>
       <body className="flex min-h-full flex-col">
         <a
           href="#main"

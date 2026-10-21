@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { HeartIcon, LayoutDashboardIcon, LogOutIcon, LuggageIcon, MoonIcon, SunIcon, UserRoundIcon } from "lucide-react";
 import { signOut } from "next-auth/react";
-import { useTheme } from "next-themes";
 import { toast } from "sonner";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,6 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { CurrentUser } from "@/lib/auth/guards";
 import { initials } from "@/lib/format";
+import { useTheme } from "@/components/theme-provider";
 
 /** Signs out without a full page load, then shows a toast. */
 export function useSignOut() {

@@ -10,6 +10,7 @@ import { sendBookingCancelledEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/format";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { hit, LIMITS, waitText } from "@/lib/rate-limit";
 import {
   AVATAR_MAX_BYTES,
   AVATAR_TYPES,
@@ -29,9 +30,17 @@ type Result<Input = never> =
 
 const SIGNED_OUT = { ok: false, formError: "Your session has ended. Sign in again to continue." } as const;
 
+/** Every account change counts towards one generous limit per user. */
+async function tooFast(userId: string, limit: { limit: number; window: number } = LIMITS.accountWrite) {
+  const result = await hit(`account:${limit === LIMITS.passwordChange ? "password" : "write"}:${userId}`, limit);
+  return result.ok ? null : ({ ok: false, formError: `That is a lot of changes in a short time. Please wait ${waitText(result.retryAfter)} and try again.` } as const);
+}
+
 export async function cancelBookingAction(bookingId: string): Promise<Result> {
   const user = await getCurrentUser();
   if (!user) return SIGNED_OUT;
+  const limited = await tooFast(user.id);
+  if (limited) return limited;
   const id = idSchema.safeParse(bookingId);
   if (!id.success) return { ok: false, formError: "We could not find this booking." };
 
@@ -53,6 +62,8 @@ export async function cancelBookingAction(bookingId: string): Promise<Result> {
 export async function updateProfileAction(input: ProfileInput): Promise<Result<ProfileInput>> {
   const user = await getCurrentUser();
   if (!user) return SIGNED_OUT;
+  const limited = await tooFast(user.id);
+  if (limited) return limited;
   const parsed = profileSchema.safeParse(input);
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
 
@@ -65,6 +76,8 @@ export async function updateProfileAction(input: ProfileInput): Promise<Result<P
 export async function changePasswordAction(input: PasswordChangeInput): Promise<Result<PasswordChangeInput>> {
   const user = await getCurrentUser();
   if (!user) return SIGNED_OUT;
+  const limited = await tooFast(user.id, LIMITS.passwordChange);
+  if (limited) return limited;
   const parsed = passwordChangeSchema.safeParse(input);
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
 
@@ -89,6 +102,8 @@ function sniffImage(bytes: Uint8Array): (typeof AVATAR_TYPES)[number] | null {
 export async function uploadAvatarAction(formData: FormData): Promise<Result> {
   const user = await getCurrentUser();
   if (!user) return SIGNED_OUT;
+  const limited = await tooFast(user.id);
+  if (limited) return limited;
   const file = formData.get("avatar");
   if (!(file instanceof File) || file.size === 0) return { ok: false, formError: "Choose a photo to upload." };
   if (file.size > AVATAR_MAX_BYTES) return { ok: false, formError: "That photo is too large. Try a smaller one." };
@@ -111,6 +126,8 @@ export async function uploadAvatarAction(formData: FormData): Promise<Result> {
 export async function removeAvatarAction(): Promise<Result> {
   const user = await getCurrentUser();
   if (!user) return SIGNED_OUT;
+  const limited = await tooFast(user.id);
+  if (limited) return limited;
   await prisma.$transaction([
     prisma.userAvatar.deleteMany({ where: { userId: user.id } }),
     prisma.user.update({ where: { id: user.id }, data: { image: null } }),
@@ -123,6 +140,8 @@ export async function removeAvatarAction(): Promise<Result> {
 export async function submitReviewAction(input: ReviewInput): Promise<Result<ReviewInput>> {
   const user = await getCurrentUser();
   if (!user) return SIGNED_OUT;
+  const limited = await tooFast(user.id);
+  if (limited) return limited;
   const parsed = reviewSchema.safeParse(input);
   if (!parsed.success) return { ok: false, fieldErrors: fieldErrors(parsed.error) };
   const { bookingId, comment, ...ratings } = parsed.data;

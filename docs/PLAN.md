@@ -20,8 +20,8 @@ This file is updated at the end of every phase.
 | 7  | Booking + Stripe payments             | Done        |
 | 8  | Guest account                         | Done        |
 | 9  | Admin dashboard                       | Done        |
-| 10 | Production readiness + tests + deploy | Next        |
-| 11 | Final UI/UX polish                    | Not started |
+| 10 | Production readiness + tests + deploy | Done        |
+| 11 | Final UI/UX polish                    | Next        |
 
 ## Architecture
 
@@ -97,8 +97,22 @@ This file is updated at the end of every phase.
   data), rendered with `next/image`. A custom loader
   (`src/lib/image-loader.ts`) has the Unsplash CDN resize them, so they do not
   pass through the Next.js image optimizer.
-- **Tests:** Vitest (`npm test`), focused on pure logic: redirects,
-  validation, and the availability and pricing engine.
+- **Tests:** Vitest (`npm test`) for pure logic: redirects, validation, the
+  availability and pricing engine, policies, metrics, CSV and emails.
+  Playwright (`npm run test:e2e`, specs in `e2e/`) drives the installed
+  Chrome on desktop and phone viewports against a production build, the real
+  database and Stripe in test mode.
+- **Security:** headers and a Content-Security-Policy in `next.config.ts`;
+  Postgres-backed fixed-window rate limits in `src/lib/rate-limit.ts` for
+  sign-in, sign-up, booking and account changes; client calls to server
+  actions go through `safe()` (`src/lib/safe-action.ts`), so a dropped
+  connection shows a message instead of an error page.
+- **Theme:** an in-house provider (`src/components/theme-provider.tsx`) with
+  the init script rendered by the root layout. It replaced next-themes, whose
+  script inside a client component made React 19 warn.
+- **SEO:** metadata on every page, canonical URLs, `sitemap.xml`,
+  `robots.txt`, and Open Graph images drawn with `next/og` for the site and
+  for each hotel.
 
 ## Data model
 
@@ -355,9 +369,41 @@ lists every variable the app needs.
 - Not done: editing a reservation's dates or room, and partial refunds.
   Photo uploads need Cloudinary keys.
 
-### 10. Production readiness + tests + deploy
+### 10. Production readiness + tests + deploy (done)
 
-Error handling, security review, test coverage, deployment.
+- Error boundaries for every route group (site, sign-in, admin) and a
+  global one; not-found pages for the site and the admin. Every client call
+  to a server action handles a failed request.
+- Security: rate limits (new `RateLimit` table) on sign-in (per email and
+  per address, with a clear message), sign-up, booking and account changes;
+  security headers and a CSP; `poweredByHeader` off. Zod validation and
+  server-side authorisation were reviewed across every action and route.
+- SEO: `metadataBase`, canonical URLs, `sitemap.xml`, `robots.txt`
+  (private areas excluded), and dynamic Open Graph images for the site and
+  each hotel (photo, name, place, rating and price).
+- Playwright end-to-end tests on desktop and mobile: search to hotel to
+  booking to Stripe payment to confirmation (then cancel for a refund);
+  sign-in in the middle of a booking; an admin rate change reaching the
+  hotel page.
+- Performance: indexes for the admin queries (newest bookings, arrivals,
+  departures, revenue per period); the slowest dashboard query went from
+  27 ms to 0.07 ms on 11,000 bookings. The hotel lookup is cached per request,
+  so the page, its metadata and its image share one query. Bundle analysis
+  is available with `npm run analyze`.
+- The pg `sslmode` warning is resolved: `src/lib/db-url.ts` states
+  `sslmode=verify-full`, which is what node-postgres already does for
+  `require`.
+- The next-themes development warning ("Encountered a script tag") is gone;
+  the theme provider was replaced.
+- Prisma updated to 7.10.1, which clears the high-severity mysql2 advisory
+  pulled in by the Prisma CLI.
+- Vercel Cron (`vercel.json`) runs the hold clean-up daily with
+  `CRON_SECRET`; the README has the full Vercel and Neon deployment guide.
+- Not done: the remaining `npm audit` items come from `braces` inside the
+  shadcn CLI and ESLint tooling. No fixed version exists yet, and they never
+  see user input. Zod's locale files add about 90 KB (gzipped) to pages with
+  forms; removing them needs `zod/mini`, which would mean rewriting every
+  schema.
 
 ### 11. Final UI/UX polish
 

@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { AdminNight } from "@/lib/admin/inventory";
 import { formatPrice, pluralize } from "@/lib/format";
+import { safe } from "@/lib/safe-action";
 import { cn } from "@/lib/utils";
 import type { RateUpdateInput } from "@/lib/validation/admin";
 
@@ -122,7 +123,7 @@ export function RatesCalendar({
     const full: RateUpdateInput = { ...update, roomTypeId, from: range.from, to: range.to };
     startTransition(async () => {
       setOptimistic(full);
-      const result = await applyRatesAction(full);
+      const result = await safe(applyRatesAction(full));
       if (!result.ok) {
         toast.error("Nothing changed", { description: result.formError });
         return;

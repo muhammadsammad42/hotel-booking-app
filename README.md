@@ -138,13 +138,103 @@ booking completes even if the webhook is slow; both paths are idempotent.
 Lapsed holds are released by `GET /api/cron/expire-holds` (schedule it, for
 example every 10 minutes, with `Authorization: Bearer $CRON_SECRET`).
 
-## Other commands
+## Tests
 
-| Command         | What it does               |
-| --------------- | -------------------------- |
-| `npm run build` | Production build           |
-| `npm run lint`  | Lint the project           |
-| `npm test`      | Run the unit tests         |
+| Command | What it does |
+| --- | --- |
+| `npm test` | Unit tests (Vitest): the booking engine, policies, metrics, validation, CSV and email templates |
+| `npm run test:e2e` | End-to-end tests (Playwright) on a desktop and a phone viewport |
+| `npm run lint` | ESLint |
+| `npm run build` | Production build, including type checking |
+| `npm run analyze` | Bundle analyzer (Turbopack), in the browser |
+
+The end-to-end tests build the app, start it on port 3100 and use the real
+database and Stripe in test mode, so `.env` needs the database URLs, the
+Stripe test keys and the seed passwords. They use the Chrome installed on
+your machine. They cover:
+
+- search, hotel page, booking, payment with the test card 4242 4242 4242 4242,
+  confirmation, then cancelling the trip for a refund;
+- signing in in the middle of a booking and landing back on it;
+- an admin changing a nightly rate and the hotel page charging it.
+
+To test a server that is already running: `E2E_BASE_URL=http://localhost:3000 npm run test:e2e`.
+
+## Deploying to Vercel and Neon
+
+1. **Database.** In Neon, create a project and copy two connection strings:
+   the direct one (`DATABASE_URL`) and the pooled one, whose host contains
+   `-pooler` (`DATABASE_URL_POOLED`).
+
+2. **Migrations.** From your machine, with `DATABASE_URL` pointing at the
+   production database, apply the migrations:
+
+   ```bash
+   npx prisma migrate deploy
+   ```
+
+   Run it again whenever a release adds a migration. To have Vercel do it on
+   every deploy instead, set the build command to
+   `npx prisma migrate deploy && npm run build`.
+
+3. **Demo data (optional).** With the same `.env`, run `npm run db:seed`.
+   It replaces all hotels, bookings and reviews, so only do this on a demo
+   database. It refuses to run when `NODE_ENV` is `production`.
+
+4. **Project.** Import the GitHub repository in Vercel. The framework preset
+   (Next.js) and the default build command are right; `prisma generate`
+   runs on install.
+
+5. **Environment variables.** In Vercel, under Settings, Environment
+   Variables, add for Production:
+
+   | Variable | Value |
+   | --- | --- |
+   | `DATABASE_URL`, `DATABASE_URL_POOLED` | From Neon |
+   | `AUTH_SECRET` | A new secret: `npx auth secret` |
+   | `APP_URL` | The site address, e.g. `https://sarai.vercel.app` |
+   | `STRIPE_SECRET_KEY` | `sk_test_...` for a demo, `sk_live_...` for real payments |
+   | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | The matching `pk_...` key |
+   | `STRIPE_WEBHOOK_SECRET` | From step 6 |
+   | `CRON_SECRET` | A long random string, e.g. `openssl rand -hex 32` |
+   | `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`, `SEED_GUEST_PASSWORD` | Only if you seed from Vercel; not needed at runtime |
+   | `RESEND_API_KEY`, `EMAIL_FROM` | Optional, for booking emails |
+   | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Optional, for admin photo uploads |
+
+6. **Stripe webhook.** In the Stripe Dashboard, under Developers, Webhooks,
+   add an endpoint for `https://YOUR-DOMAIN/api/webhooks/stripe` with these
+   events: `checkout.session.completed`, `checkout.session.expired`,
+   `checkout.session.async_payment_succeeded` and
+   `checkout.session.async_payment_failed`. Copy its signing secret
+   (`whsec_...`) into `STRIPE_WEBHOOK_SECRET` and redeploy.
+
+7. **Cron.** `vercel.json` schedules `/api/cron/expire-holds` with Vercel
+   Cron. Vercel sends `Authorization: Bearer $CRON_SECRET` automatically
+   once `CRON_SECRET` is set; without it the route refuses to run in
+   production. The schedule is daily (04:00 UTC), the most the Hobby plan
+   allows. That is enough because availability already ignores lapsed holds;
+   the job only tidies records and old rate-limit counters. On the Pro plan
+   you can change it to `*/10 * * * *`.
+
+   On Vercel, Auth.js trusts the host by itself. On any other host (or with
+   `npm run start` locally), also set `AUTH_TRUST_HOST=true`.
+
+8. **Deploy and check.** Open the site, sign in with the seeded admin, make a
+   booking with the test card, and check that the Stripe webhook delivery
+   shows `200` in the Dashboard.
+
+## Security
+
+- Every server action and route handler checks who is signed in and, for
+  admin work, re-reads the role from the database. Every input is validated
+  with Zod.
+- Sign-in, sign-up, booking and account changes are rate limited (counts are
+  kept in Postgres, so the limits hold across serverless instances).
+- Security headers on every response: a Content-Security-Policy,
+  `X-Frame-Options: DENY`, `nosniff`, a strict referrer policy, a
+  permissions policy and HSTS in production.
+- Stripe webhooks are verified with their signature; payments are confirmed
+  idempotently and never trusted from the browser.
 
 ## Project structure
 

@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
 import type { HotelCardData } from "@/lib/catalog/hotels";
 import { duration, ease } from "@/lib/motion";
+import { safe } from "@/lib/safe-action";
 import { setWishlisted } from "@/lib/wishlist/actions";
 
 /**
@@ -33,7 +34,7 @@ export function WishlistGrid({ initialHotels }: { initialHotels: HotelCardData[]
 
   async function undo(hotel: HotelCardData, index: number) {
     restore(hotel, index);
-    const result = await setWishlisted({ hotelId: hotel.id, saved: true });
+    const result = await safe(setWishlisted({ hotelId: hotel.id, saved: true }));
     if (!result.ok) {
       setHotels((current) => current.filter((item) => item.id !== hotel.id));
       toast.error("We could not put it back", { description: "Please save it again from the hotel page." });
@@ -43,7 +44,7 @@ export function WishlistGrid({ initialHotels }: { initialHotels: HotelCardData[]
   async function remove(hotel: HotelCardData) {
     const index = hotels.findIndex((item) => item.id === hotel.id);
     setHotels((current) => current.filter((item) => item.id !== hotel.id));
-    const result = await setWishlisted({ hotelId: hotel.id, saved: false });
+    const result = await safe(setWishlisted({ hotelId: hotel.id, saved: false }));
     if (!result.ok) {
       restore(hotel, index);
       toast.error("We could not remove it", { description: "Please try again." });
