@@ -266,6 +266,24 @@ returns to the trigger.
 | `Receipt` | Printing a booking | Hidden on screen. Print styles hide the rest of the page and print black on white. |
 | `Confetti` | The confirmation page only | A short burst; skipped when the system asks for less motion. |
 
+### Admin
+
+| Component | Use it for | Notes |
+| --- | --- | --- |
+| `AdminShell` | Every admin page | Sidebar (collapses to icons), mobile drawer, top bar with search. |
+| `CommandPalette` | Ctrl+K anywhere in the admin | Pages, actions, and live search of bookings and hotels. |
+| `KpiCard` | Headline numbers | Value, a trend pill (success up, destructive down, muted flat) and what it is compared with. |
+| `RevenueChart`, `BookingsChart` | Monthly trends | One series each, no legend; `primary` area and `secondary` bars; tooltip on hover and a hidden data table. |
+| `OccupancyHeatmap` | Rooms booked per night | One hue, light to dark (muted, then primary at 15, 35, 60, 85 and 100%). Blocked nights get a warning ring. |
+| `RatesCalendar` | Prices and blocks | Custom prices tinted primary; blocked nights striped. |
+| `Switch` | Settings that apply at once | Green when on. Hiding something asks for confirmation first. |
+| `StayActions` | Check-in and check-out | Optimistic badge; rolls back with a toast on error. |
+
+Admin tables use a muted header row, hairline dividers and `tabular-nums`
+for money. Below 768px, tables that would scroll become cards. Every table
+scroller is `relative`, so screen-reader-only text inside it cannot widen the
+page.
+
 ### States
 
 Every screen that loads data needs all three:

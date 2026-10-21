@@ -19,8 +19,8 @@ This file is updated at the end of every phase.
 | 6  | Availability + pricing engine         | Done        |
 | 7  | Booking + Stripe payments             | Done        |
 | 8  | Guest account                         | Done        |
-| 9  | Admin dashboard                       | Next        |
-| 10 | Production readiness + tests + deploy | Not started |
+| 9  | Admin dashboard                       | Done        |
+| 10 | Production readiness + tests + deploy | Next        |
 | 11 | Final UI/UX polish                    | Not started |
 
 ## Architecture
@@ -75,6 +75,14 @@ This file is updated at the end of every phase.
   (`/api/avatars/[userId]?v=...`), so the session cookie stays small. After a
   profile change the session is re-issued with the name and photo re-read
   from the database.
+- **Admin:** its own route group, `src/app/(admin)/admin`, with an app shell
+  (collapsible sidebar, mobile drawer, Ctrl+K command palette) instead of the
+  site header. The layout and every page call `requireAdmin()`; every server
+  action (`_actions/`) and the CSV route call `getAdmin()`, which re-reads the
+  role from the database. Metrics are pure functions in
+  `src/lib/admin/metrics.ts`; rates and inventory reuse the booking engine, so
+  the admin sees exactly what guests are sold. Reservation filters live in
+  the URL and are shared by the table and the CSV export.
 - **Search:** filters live in the URL (`src/lib/search/params.ts`), so
   results can be shared and restored. Destination, stars, amenities and
   guests filter in the database; price and rating are applied in memory.
@@ -149,6 +157,7 @@ with a demo set and upserts the demo users. It refuses to run when
 src/app            Routes, layouts, pages, route handlers
   (site)/          Pages with the site header and footer
   (auth)/          Split-screen sign-in and sign-up pages
+  (admin)/         Admin dashboard with its own app shell
 src/proxy.ts       Optimistic route protection (Next.js proxy)
 src/components     Shared React components
   ui/              Building blocks (buttons, inputs, dialogs...)
@@ -158,6 +167,7 @@ src/components     Shared React components
   design/          Demos used only by the /design page
   auth/            Sign-in and sign-up forms
   account/         Trips, trip page, receipt, reviews, wishlist, profile
+  admin/           Admin shell, palette, charts, forms, calendars
   booking/         Booking pieces shared by several pages
   home/            Home page sections
   hotel/           Hotel cards, hotel page and the booking card
@@ -312,9 +322,38 @@ lists every variable the app needs.
   deleting an account (bookings are kept as financial records, so this needs
   an anonymisation step).
 
-### 9. Admin dashboard
+### 9. Admin dashboard (done)
 
-Manage hotels, room types, rates, availability blocks and reservations.
+- App shell: a sidebar that collapses to icons (remembered in a cookie, so
+  the server renders it the same way), a drawer on mobile, and a command
+  palette (Ctrl+K) to jump to pages and search bookings and hotels.
+- Overview: revenue and bookings this month against the same days of last
+  month, occupancy and average daily rate for the month against last month,
+  with trend arrows; Recharts revenue and bookings charts (12 months, with a
+  table for screen readers); arrivals and departures for today with
+  one-click check-in and check-out; recent bookings.
+- Hotels and room types: list, create, edit and hide (with confirmation) in
+  sectioned, Zod-validated forms; an amenities picker; photos by URL with
+  drag and keyboard reordering, or uploads straight to Cloudinary when its
+  keys are set. A separate Amenities page adds, renames and deletes
+  amenities.
+- Rates: a two-month calendar per room type. Drag (or tap a start and an
+  end) to select dates, then set a price, go back to the base price, block
+  rooms or remove blocks. Custom prices and blocks are highlighted, and
+  changes show at once on the public hotel page.
+- Inventory: an occupancy heatmap per room type and night (one hue, light
+  to dark), four weeks at a time, filterable by hotel.
+- Reservations: search, status, hotel, check-in range and check-out filters
+  in the URL; sorting; pagination; cards on phones; a detail drawer with
+  check-in, check-out and cancel with refund; CSV export that is safe to
+  open in a spreadsheet.
+- Optimistic updates with toasts (check-in, hiding, rates, deleting
+  amenities), confirmation dialogs for destructive actions, and skeletons
+  for every page.
+- The seed now writes a year of trading history (about 11,000 bookings), so
+  the dashboard shows realistic numbers.
+- Not done: editing a reservation's dates or room, and partial refunds.
+  Photo uploads need Cloudinary keys.
 
 ### 10. Production readiness + tests + deploy
 

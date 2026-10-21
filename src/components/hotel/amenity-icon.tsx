@@ -84,6 +84,9 @@ const icons: Record<string, LucideIcon> = {
   bath: BathIcon,
 };
 
+/** Every icon key an amenity can use, for the admin amenity editor. */
+export const AMENITY_ICON_KEYS = Object.keys(icons);
+
 export function AmenityIcon({ iconKey, className }: { iconKey: string; className?: string }) {
   const Icon = icons[iconKey] ?? CheckIcon;
   return <Icon className={cn("size-5 shrink-0", className)} aria-hidden />;

@@ -49,6 +49,7 @@ system is documented in [docs/DESIGN.md](docs/DESIGN.md) and shown live at
    | `CRON_SECRET`           | Protects the hold clean-up route (required in production)  |
    | `RESEND_API_KEY`        | Optional. Sends booking and cancellation emails            |
    | `EMAIL_FROM`            | Sender for those emails, on a domain verified in Resend    |
+   | `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` | Optional. Photo uploads in the admin |
 
 3. Create the database tables and load the demo data:
 
@@ -57,7 +58,8 @@ system is documented in [docs/DESIGN.md](docs/DESIGN.md) and shown live at
    npm run db:seed
    ```
 
-   The seed takes a minute or two. It replaces all hotels, bookings and
+   The seed takes about two minutes: it writes about 11,000 bookings, so the
+   admin dashboard has a year of history. It replaces all hotels, bookings and
    reviews with the demo set, so do not run it against real data.
 
 4. Start the development server:

@@ -541,8 +541,147 @@ async function seedBookings(
     },
   );
 
+  // Today at the front desk, so the admin dashboard has arrivals and departures.
+  bookings.push(
+    {
+      guest: guests[4],
+      roomType: room("hotel-kumo-shibuya", "compact-queen"),
+      checkIn: today,
+      nights: 2,
+      guests: 2,
+      status: "CONFIRMED",
+      createdAt: addDays(today, -18),
+      payment: "SUCCEEDED",
+      specialRequests: "Arriving on the late train, around 11 pm.",
+    },
+    {
+      guest: guests[5],
+      roomType: room("galata-pera-house", "deluxe-room"),
+      checkIn: addDays(today, -3),
+      nights: 3,
+      guests: 2,
+      status: "CHECKED_IN",
+      createdAt: addDays(today, -30),
+      payment: "SUCCEEDED",
+    },
+  );
+
   for (const booking of bookings) {
     await createBooking(booking, prices);
+  }
+  await seedTradingHistory(catalogue, guests.slice(3), bookings, prices, today);
+}
+
+/**
+ * A year of ordinary trading from the other demo guests, so the admin
+ * dashboard has realistic revenue, occupancy and trends. Each room of a room
+ * type is filled by walking through time: a stay, a gap, another stay, with
+ * busier summers and holidays. Stays further ahead are less likely to have
+ * been booked yet. At least one room of every type is always left free, so
+ * guests can still book, and nothing is ever oversold.
+ */
+async function seedTradingHistory(catalogue: Catalogue, guests: Guest[], existing: BookingInput[], prices: Map<string, number>, today: Date) {
+  const taken = new Map<string, number>();
+  for (const booking of existing) {
+    if (booking.status === "CANCELLED" || booking.status === "EXPIRED") continue;
+    for (let night = 0; night < booking.nights; night++) {
+      const key = `${booking.roomType.id}:${dateKey(addDays(booking.checkIn, night))}`;
+      taken.set(key, (taken.get(key) ?? 0) + (booking.rooms ?? 1));
+    }
+  }
+
+  const start = addDays(today, -365);
+  const end = addDays(today, 90);
+  const busy = (date: Date) => {
+    const month = date.getUTCMonth();
+    if (isHolidaySeason(date)) return 0.85;
+    if (month >= 5 && month <= 8) return 0.75;
+    if (month === 0 || month === 1 || month === 10) return 0.45;
+    return 0.6;
+  };
+
+  const bookings = [];
+  const payments = [];
+  for (const { seed, record } of catalogue) {
+    for (const roomType of record.roomTypes) {
+      // Small room types keep one room free, larger ones two.
+      const capacity = roomType.totalInventory - (roomType.totalInventory <= 4 ? 1 : 2);
+      const slots = Math.max(0, capacity);
+      for (let slot = 0; slot < slots; slot++) {
+        let day = addDays(start, randomInt(0, 6));
+        while (day < end) {
+          const nights = randomInt(1, 6);
+          const checkIn = day;
+          const checkOut = addDays(checkIn, nights);
+          // The gap before the next stay: shorter in busy seasons.
+          day = addDays(checkOut, Math.round((1 - busy(checkIn)) * randomInt(2, 9)));
+
+          const daysAhead = Math.round((checkIn.getTime() - today.getTime()) / DAY_MS);
+          if (daysAhead > 0 && random() < Math.min(0.92, daysAhead / 75)) continue;
+          const keys = Array.from({ length: nights }, (_, night) => `${roomType.id}:${dateKey(addDays(checkIn, night))}`);
+          if (keys.some((key) => (taken.get(key) ?? 0) + 1 > capacity)) continue;
+
+          const cancelled = random() < 0.06;
+          // Today's arrivals have not checked in yet, and some of today's departures are still in house.
+          const status: BookingStatus = cancelled
+            ? "CANCELLED"
+            : checkOut < today || (checkOut.getTime() === today.getTime() && random() < 0.5)
+              ? "CHECKED_OUT"
+              : checkIn < today || checkOut.getTime() === today.getTime()
+                ? "CHECKED_IN"
+                : "CONFIRMED";
+          if (!cancelled) for (const key of keys) taken.set(key, (taken.get(key) ?? 0) + 1);
+
+          const priced = quote({
+            nights: keys.map((key, night) => {
+              const date = addDays(checkIn, night);
+              return { date: dateKey(date), price: prices.get(key) ?? overridePrice(seed, roomType.basePrice, date) ?? roomType.basePrice, override: false };
+            }),
+            rooms: 1,
+          });
+          // Booked a few days to three months ahead, never in the future.
+          const leadDays = daysAhead > 0 ? daysAhead + randomInt(0, 60) : randomInt(3, 90);
+          const createdAt = new Date(Math.min(checkIn.getTime() - leadDays * DAY_MS, today.getTime()) + randomInt(7 * 60, 23 * 60) * 60_000);
+          const guest = guests[randomInt(0, guests.length - 1)];
+          const reference = bookingReference();
+          const id = `seed_${reference.slice(3).toLowerCase()}`;
+
+          bookings.push({
+            id,
+            reference,
+            userId: guest.id,
+            roomTypeId: roomType.id,
+            checkIn,
+            checkOut,
+            guests: Math.min(roomType.maxGuests, randomInt(1, 3)),
+            rooms: 1,
+            subtotal: priced.subtotal,
+            taxes: priced.taxes,
+            serviceFee: priced.serviceFee,
+            totalPrice: priced.total,
+            status,
+            guestName: guest.name,
+            guestEmail: guest.email,
+            guestPhone: guest.phone,
+            createdAt,
+          });
+          payments.push({
+            bookingId: id,
+            stripeCheckoutSessionId: `cs_seed_${reference}`,
+            stripePaymentIntentId: `pi_seed_${reference}`,
+            amount: priced.total,
+            status: (cancelled ? "REFUNDED" : "SUCCEEDED") as PaymentStatus,
+            paidAt: new Date(createdAt.getTime() + 4 * 60_000),
+            createdAt,
+          });
+        }
+      }
+    }
+  }
+
+  for (let index = 0; index < bookings.length; index += 1000) {
+    await prisma.booking.createMany({ data: bookings.slice(index, index + 1000) });
+    await prisma.payment.createMany({ data: payments.slice(index, index + 1000) });
   }
 }
 
