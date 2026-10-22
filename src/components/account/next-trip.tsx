@@ -15,7 +15,7 @@ export function NextTrip({ trip, now }: { trip: Trip; now: Date }) {
 
   return (
     <section aria-labelledby="next-trip-heading" className="relative isolate overflow-hidden rounded-2xl bg-lightbox text-lightbox-foreground">
-      <Image src={hotel.coverImageUrl} alt="" fill priority sizes="(min-width: 1024px) 1024px, 100vw" className="-z-10 object-cover" />
+      <Image src={hotel.coverImageUrl} alt="" fill preload fetchPriority="high" sizes="(min-width: 1024px) 1024px, 100vw" className="-z-10 object-cover" />
       {/* Scrim so the text stays readable on any photo. */}
       <div className="absolute inset-0 -z-10 bg-linear-to-t from-lightbox/90 via-lightbox/55 to-lightbox/15 sm:bg-linear-to-r sm:from-lightbox/85 sm:via-lightbox/50 sm:to-transparent" aria-hidden />
       <div className="grid gap-6 p-6 pt-24 sm:p-8 sm:pt-8 md:min-h-72 md:content-end">

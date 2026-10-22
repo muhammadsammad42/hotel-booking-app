@@ -43,6 +43,8 @@ export function SearchResults({ hotels, page, pageCount, savedIds, signedIn, pri
   const query = stayQuery(filters);
   const saved = new Set(savedIds);
   const hrefFor = (hotel: HotelCardData) => `/hotels/${hotel.slug}${query}`;
+  const listKey = `${page}-${hotels.map((hotel) => hotel.id).join()}`;
+  const [firstKey] = React.useState(listKey);
 
   const pins: MapPin[] = hotels.map((hotel) => ({
     id: hotel.id,
@@ -81,13 +83,16 @@ export function SearchResults({ hotels, page, pageCount, savedIds, signedIn, pri
   return (
     <>
       <div className={cn("min-w-0", view === "map" && "hidden lg:block")}>
+        <h2 className="sr-only">Stays that match your search</h2>
         <m.ul
-          key={`${page}-${hotels.map((hotel) => hotel.id).join()}`}
+          key={listKey}
           className={cn(
             "grid gap-5 transition-opacity duration-200 ease-soft sm:grid-cols-2",
             pending && "pointer-events-none opacity-50",
           )}
-          initial="hidden"
+          // The first results arrive with the page and show at once; later
+          // pages and filter changes fade in.
+          initial={listKey === firstKey ? false : "hidden"}
           animate="shown"
           variants={{ shown: { transition: { staggerChildren: 0.05 } } }}
           aria-busy={pending}

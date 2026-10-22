@@ -34,13 +34,18 @@ function PageContainer({
  */
 function Section({
   spacing = "editorial",
+  deferred = false,
   className,
   ...props
-}: React.ComponentProps<"section"> & { spacing?: "editorial" | "compact" }) {
+}: React.ComponentProps<"section"> & {
+  spacing?: "editorial" | "compact";
+  /** Below the fold: the browser skips its layout and paint until it is near the screen. */
+  deferred?: boolean;
+}) {
   return (
     <section
       data-slot="section"
-      className={cn(spacing === "editorial" ? "py-section" : "py-section-compact", className)}
+      className={cn(spacing === "editorial" ? "py-section" : "py-section-compact", deferred && "content-auto", className)}
       {...props}
     />
   );

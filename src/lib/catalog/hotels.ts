@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { cache } from "react";
 
 import type { Prisma } from "@/generated/prisma/client";
@@ -165,7 +166,7 @@ export async function searchHotels(
 }
 
 /** Featured and best-rated stays for the home page. */
-export async function getTrendingHotels(limit = 8) {
+async function loadTrendingHotels(limit = 8) {
   const hotels = await prisma.hotel.findMany({
     where: { isActive: true },
     include: { ...cardInclude, roomTypes: { where: { isActive: true }, select: { basePrice: true } } },
@@ -188,7 +189,7 @@ export type Destination = {
 };
 
 /** One card per city, with its best hotel photo and lowest price. */
-export async function getDestinations(): Promise<Destination[]> {
+async function loadDestinations(): Promise<Destination[]> {
   const hotels = await prisma.hotel.findMany({
     where: { isActive: true },
     orderBy: [{ isFeatured: "desc" }, { name: "asc" }],
@@ -222,7 +223,7 @@ export async function getDestinations(): Promise<Destination[]> {
 }
 
 /** Places for the destination search box, with how many stays each has. */
-export async function getDestinationSuggestions() {
+async function loadDestinationSuggestions() {
   const hotels = await prisma.hotel.findMany({ where: { isActive: true }, select: { city: true, country: true } });
   const suggestions = new Map<string, { value: string; label: string; detail: string; count: number }>();
   for (const { city, country } of hotels) {
@@ -240,7 +241,7 @@ export async function getDestinationSuggestions() {
 }
 
 /** Recent five-star reviews with a comment, for the home page. */
-export async function getTestimonials(limit = 6) {
+async function loadTestimonials(limit = 6) {
   const reviews = await prisma.review.findMany({
     where: { rating: 5, comment: { not: null } },
     orderBy: { createdAt: "desc" },
@@ -324,3 +325,28 @@ export type HotelDetail = NonNullable<Awaited<ReturnType<typeof getHotelBySlug>>
 export async function getHotelSlugs() {
   return prisma.hotel.findMany({ where: { isActive: true }, select: { slug: true, updatedAt: true } });
 }
+
+// ---------------------------------------------------------------------------
+// Cached catalogue reads. They change only when an admin edits the catalogue
+// or a guest leaves a review; those actions call updateTag(CATALOG_TAG). The
+// cache stores JSON, so dates are revived where a result has them.
+// ---------------------------------------------------------------------------
+
+export const CATALOG_TAG = "catalog";
+const cacheOptions = { tags: [CATALOG_TAG], revalidate: 600 };
+
+export const getTrendingHotels = unstable_cache(loadTrendingHotels, ["catalog:trending"], cacheOptions);
+export const getDestinations = unstable_cache(loadDestinations, ["catalog:destinations"], cacheOptions);
+export const getDestinationSuggestions = unstable_cache(loadDestinationSuggestions, ["catalog:suggestions"], cacheOptions);
+
+const cachedTestimonials = unstable_cache(loadTestimonials, ["catalog:testimonials"], cacheOptions);
+export async function getTestimonials(limit = 6) {
+  return (await cachedTestimonials(limit)).map((review) => ({ ...review, createdAt: new Date(review.createdAt) }));
+}
+
+/** The few fields a hotel page's metadata needs, cached so the <head> is not kept waiting. */
+export const getHotelMeta = unstable_cache(
+  (slug: string) => prisma.hotel.findFirst({ where: { slug, isActive: true }, select: { name: true, slug: true, city: true, description: true } }),
+  ["catalog:hotel-meta"],
+  cacheOptions,
+);

@@ -47,6 +47,14 @@ export function HotelCard({
 }: HotelCardProps) {
   const [emblaRef, embla] = useEmblaCarousel({ loop: hotel.images.length > 1 });
   const [index, setIndex] = React.useState(0);
+  // Only the cover photo renders at first. The carousel starts when the guest
+  // reaches for the card, so a page of cards hydrates without a dozen
+  // carousels measuring the layout at once.
+  const [live, setLive] = React.useState(false);
+  const wake = () => {
+    if (!live && hotel.images.length > 1) setLive(true);
+  };
+  const slides = live ? hotel.images : hotel.images.slice(0, 1);
 
   React.useEffect(() => {
     if (!embla) return;
@@ -74,25 +82,31 @@ export function HotelCard({
       )}
       onMouseEnter={() => onActiveChange?.(true)}
       onMouseLeave={() => onActiveChange?.(false)}
-      onFocus={() => onActiveChange?.(true)}
+      onPointerEnter={wake}
+      onTouchStart={wake}
+      onFocus={() => {
+        wake();
+        onActiveChange?.(true);
+      }}
       onBlur={() => onActiveChange?.(false)}
     >
       <div className={cn("relative overflow-hidden bg-muted", aspect === "portrait" ? "aspect-4/5" : "aspect-4/3")}>
-        <div ref={emblaRef} className="h-full overflow-hidden">
+        <div ref={live ? emblaRef : undefined} className="h-full overflow-hidden">
           <div className="flex h-full">
-            {hotel.images.map((image, imageIndex) => (
+            {slides.map((image, imageIndex) => (
               <div key={image.url} className="relative h-full min-w-0 shrink-0 grow-0 basis-full">
                 {/* Photos link too, so a tap opens the hotel while a swipe changes photo.
                     The text link below is the one in the tab order. */}
                 <Link href={href} tabIndex={-1} aria-hidden draggable={false} className="absolute inset-0">
-                <Image
-                  src={image.url}
-                  alt={imageIndex === 0 ? image.alt : ""}
-                  fill
-                  sizes={sizes}
-                  priority={priority && imageIndex === 0}
-                  className="object-cover transition-transform duration-500 ease-soft group-hover/card:scale-[1.03]"
-                />
+                  <Image
+                    src={image.url}
+                    alt={imageIndex === 0 ? image.alt : ""}
+                    fill
+                    sizes={sizes}
+                    preload={priority && imageIndex === 0}
+                    fetchPriority={priority && imageIndex === 0 ? "high" : undefined}
+                    className="object-cover transition-transform duration-500 ease-soft group-hover/card:scale-[1.03]"
+                  />
                 </Link>
               </div>
             ))}

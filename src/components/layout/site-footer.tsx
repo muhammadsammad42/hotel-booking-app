@@ -15,7 +15,7 @@ function SiteFooter({ signedIn = false }: { signedIn?: boolean }) {
   );
 
   return (
-    <footer className="mt-auto border-t bg-muted/50 print:hidden">
+    <footer className="content-auto mt-auto border-t bg-muted/50 print:hidden">
       <PageContainer className="py-14 md:py-20">
         <div className="grid gap-12 lg:grid-cols-[1.4fr_2fr] lg:gap-20">
           <div className="max-w-sm">

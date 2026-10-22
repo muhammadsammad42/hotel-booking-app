@@ -6,9 +6,9 @@ import { ArrowRightIcon, CalendarDaysIcon } from "lucide-react";
 import type { DateRange, Matcher } from "react-day-picker";
 
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { controlClasses } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Sheet,
   SheetBody,
@@ -54,6 +54,29 @@ type DateRangePickerProps = {
 
 function formatDay(date: Date | undefined, placeholder: string) {
   return date ? format(date, "EEE, d MMM") : placeholder;
+}
+
+// The month grid (react-day-picker) loads when the picker is first opened, or
+// warmed up when the guest points at it, so pages with a search form do not
+// pay for it at load.
+const loadCalendar = () => import("@/components/ui/calendar");
+const Calendar = React.lazy(() => loadCalendar().then((module) => ({ default: module.Calendar })));
+
+function CalendarPlaceholder({ months }: { months: number }) {
+  return (
+    <div className="flex gap-8" role="status" aria-label="Loading the calendar">
+      {Array.from({ length: months }, (_, month) => (
+        <div key={month} className="grid w-72 gap-2">
+          <Skeleton className="mx-auto h-5 w-32" />
+          <div className="grid grid-cols-7 gap-1">
+            {Array.from({ length: 35 }, (_, day) => (
+              <Skeleton key={day} className="aspect-square rounded-md" />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 /**
@@ -106,6 +129,8 @@ function DateRangePicker({
     <button
       type="button"
       data-slot="date-range-picker"
+      onPointerEnter={() => void loadCalendar()}
+      onFocus={() => void loadCalendar()}
       className={cn(
         controlClasses,
         "flex h-auto min-h-14 items-center gap-3 py-2 text-left data-[state=open]:border-ring data-[state=open]:ring-3 data-[state=open]:ring-ring/25",
@@ -132,21 +157,23 @@ function DateRangePicker({
   );
 
   const calendar = (
-    <Calendar
-      mode="range"
-      // Keyboard users land on the day grid, not the month arrows.
-      autoFocus
-      selected={range}
-      onSelect={(next, clicked) => select(next, clicked)}
-      numberOfMonths={isDesktop ? 2 : 1}
-      defaultMonth={range?.from}
-      startMonth={startOfToday()}
-      disabled={[{ before: startOfToday() }, ...unavailable]}
-      excludeDisabled
-      min={minNights}
-      max={maxNights}
-      {...calendarProps}
-    />
+    <React.Suspense fallback={<CalendarPlaceholder months={isDesktop ? 2 : 1} />}>
+      <Calendar
+        mode="range"
+        // Keyboard users land on the day grid, not the month arrows.
+        autoFocus
+        selected={range}
+        onSelect={(next, clicked) => select(next, clicked)}
+        numberOfMonths={isDesktop ? 2 : 1}
+        defaultMonth={range?.from}
+        startMonth={startOfToday()}
+        disabled={[{ before: startOfToday() }, ...unavailable]}
+        excludeDisabled
+        min={minNights}
+        max={maxNights}
+        {...calendarProps}
+      />
+    </React.Suspense>
   );
 
   const actions = (

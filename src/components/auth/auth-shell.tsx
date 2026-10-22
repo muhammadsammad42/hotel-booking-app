@@ -21,7 +21,7 @@ function AuthShell({ photo, caption, children }: AuthShellProps) {
   return (
     <div className="grid min-h-dvh lg:grid-cols-[1.05fr_1fr]">
       <figure className="relative hidden overflow-hidden bg-muted lg:block">
-        <Image src={photo.url} alt={photo.alt} fill priority sizes="55vw" className="object-cover" />
+        <Image src={photo.url} alt={photo.alt} fill preload fetchPriority="high" sizes="55vw" className="object-cover" />
         <div className="absolute inset-0 bg-linear-to-t from-lightbox/85 via-lightbox/15 to-lightbox/30" aria-hidden />
         <Link
           href="/"

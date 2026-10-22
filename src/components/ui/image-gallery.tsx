@@ -19,6 +19,8 @@ import { cn } from "@/lib/utils";
 type GalleryImage = { url: string; alt: string };
 
 type ImageGalleryProps = {
+  /** Image sizes for the slides; match another layout of the same photos to share one download. */
+  sizes?: string;
   images: GalleryImage[];
   /** Load the first image eagerly when the gallery is above the fold. */
   priority?: boolean;
@@ -52,7 +54,7 @@ const overlayButton =
  * Photo carousel that opens a fullscreen lightbox. Swipe, drag or use the
  * arrow keys to move between photos; Escape closes the lightbox.
  */
-function ImageGallery({ images, priority = false, className }: ImageGalleryProps) {
+function ImageGallery({ images, priority = false, sizes = "(min-width: 1280px) 1200px, 100vw", className }: ImageGalleryProps) {
   const [api, setApi] = React.useState<CarouselApi>();
   const [lightboxOpen, setLightboxOpen] = React.useState(false);
   const index = useSelectedIndex(api);
@@ -80,8 +82,9 @@ function ImageGallery({ images, priority = false, className }: ImageGalleryProps
                   src={image.url}
                   alt={image.alt}
                   fill
-                  priority={priority && imageIndex === 0}
-                  sizes="(min-width: 1280px) 1200px, 100vw"
+                  preload={priority && imageIndex === 0}
+                    fetchPriority={priority && imageIndex === 0 ? "high" : undefined}
+                  sizes={sizes}
                   className="object-cover"
                 />
               </button>

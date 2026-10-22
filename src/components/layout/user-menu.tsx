@@ -33,10 +33,11 @@ export function useSignOut() {
 }
 
 export function UserAvatar({ user, size }: { user: CurrentUser; size?: "sm" | "default" | "lg" }) {
+  // Decorative: the button or text around it names the person.
   return (
-    <Avatar size={size}>
+    <Avatar size={size} aria-hidden>
       {user.image && <AvatarImage src={user.image} alt="" />}
-      <AvatarFallback className="bg-primary/15 font-semibold text-primary">
+      <AvatarFallback className="bg-primary/15 font-semibold text-foreground">
         {initials(user.name, user.email)}
       </AvatarFallback>
     </Avatar>

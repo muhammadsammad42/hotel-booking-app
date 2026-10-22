@@ -152,7 +152,9 @@ or `text-primary` as needed.
 | `max-w-page` / `max-w-app` / `max-w-prose` | 1280 / 1024 / 672px | Content widths |
 
 Inside components, use the standard Tailwind spacing scale (multiples of
-4px). Surfaces are separated by a 1px `border`, not by shadow.
+4px). Surfaces are separated by a 1px `border`, not by shadow. Long pages mark
+sections below the fold with `content-auto` (or `<Section deferred>`), so the
+browser skips their layout until they are near the screen.
 
 ### Motion
 
@@ -301,6 +303,8 @@ Every screen that loads data needs all three:
 | Component | Use it for | Notes |
 | --- | --- | --- |
 | `Reveal` | Fading an editorial section up on scroll | Stagger a group with small `delay` steps. Never on forms or the first screen. |
+| `PageTransition` | Route templates | A 260ms fade and rise on navigation, never on the first load. |
+| `LazyMount` | Heavy widgets below the fold | Renders a placeholder until the block is near the screen, e.g. the hotel map. |
 
 ## Brand assets
 

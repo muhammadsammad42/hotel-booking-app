@@ -59,7 +59,7 @@ export default async function AdminHotelsPage() {
                   src={hotel.coverImageUrl}
                   alt=""
                   fill
-                  priority={index < 3}
+                  preload={index < 3}
                   sizes="(min-width: 1280px) 400px, (min-width: 768px) 50vw, 100vw"
                   className={cn("object-cover transition-[transform,opacity] duration-500 ease-soft group-hover/card:scale-[1.03]", !hotel.isActive && "opacity-60")}
                 />

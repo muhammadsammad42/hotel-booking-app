@@ -71,7 +71,7 @@ export function ReviewsSection({ hotel }: { hotel: HotelDetail }) {
               <header className="flex items-center gap-3">
                 <Avatar>
                   {review.user.image && <AvatarImage src={review.user.image} alt="" />}
-                  <AvatarFallback className="bg-primary/15 font-semibold text-primary">
+                  <AvatarFallback className="bg-primary/15 font-semibold text-foreground">
                     {initials(review.user.name)}
                   </AvatarFallback>
                 </Avatar>

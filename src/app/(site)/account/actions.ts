@@ -1,11 +1,12 @@
 "use server";
 
 import { after } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { getCurrentUser } from "@/lib/auth/guards";
 import { refreshSession } from "@/lib/auth";
 import { CancellationError, cancelBooking } from "@/lib/booking/cancellation";
+import { CATALOG_TAG } from "@/lib/catalog/hotels";
 import { sendBookingCancelledEmail } from "@/lib/email";
 import { formatPrice } from "@/lib/format";
 import { hashPassword, verifyPassword } from "@/lib/password";
@@ -163,6 +164,8 @@ export async function submitReviewAction(input: ReviewInput): Promise<Result<Rev
     return { ok: false, formError: "You have already reviewed this stay. Thank you!" };
   }
 
+  // Ratings and testimonials come from the cached catalogue.
+  updateTag(CATALOG_TAG);
   revalidatePath(`/hotels/${booking.roomType.hotel.slug}`);
   revalidatePath("/account/trips", "layout");
   return { ok: true, message: "Thank you for your review. It helps other travellers choose." };

@@ -12,6 +12,10 @@ import { cn } from "@/lib/utils";
  * Editorial photo grid on tablet and desktop (one large photo, four small),
  * a swipeable gallery on phones. Every photo opens the fullscreen lightbox.
  */
+// The phone gallery and the desktop grid show the same first photo. With the
+// same sizes, the browser picks the same file for both and downloads it once.
+const LEAD_SIZES = "(min-width: 1280px) 640px, (min-width: 768px) 50vw, 100vw";
+
 export function PhotoGrid({ images, hotelName }: { images: GalleryImage[]; hotelName: string }) {
   const [open, setOpen] = React.useState(false);
   const [start, setStart] = React.useState(0);
@@ -25,7 +29,7 @@ export function PhotoGrid({ images, hotelName }: { images: GalleryImage[]; hotel
   return (
     <>
       <div className="md:hidden">
-        <ImageGallery images={images} priority className="aspect-4/3" />
+        <ImageGallery images={images} priority sizes={LEAD_SIZES} className="aspect-4/3" />
       </div>
 
       <div className="relative hidden h-[min(60vh,32rem)] grid-cols-4 grid-rows-2 gap-2 overflow-hidden rounded-2xl md:grid">
@@ -44,8 +48,9 @@ export function PhotoGrid({ images, hotelName }: { images: GalleryImage[]; hotel
               src={image.url}
               alt={image.alt}
               fill
-              priority={index === 0}
-              sizes={index === 0 ? "(min-width: 1280px) 640px, 50vw" : "(min-width: 1280px) 320px, 25vw"}
+              preload={index === 0}
+              fetchPriority={index === 0 ? "high" : undefined}
+              sizes={index === 0 ? LEAD_SIZES : "(min-width: 1280px) 320px, 25vw"}
               className="object-cover transition-[transform,filter] duration-500 ease-soft group-hover:scale-[1.03] group-hover:brightness-95"
             />
           </button>

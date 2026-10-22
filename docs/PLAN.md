@@ -21,7 +21,7 @@ This file is updated at the end of every phase.
 | 8  | Guest account                         | Done        |
 | 9  | Admin dashboard                       | Done        |
 | 10 | Production readiness + tests + deploy | Done        |
-| 11 | Final UI/UX polish                    | Next        |
+| 11 | Final UI/UX polish                    | Done        |
 
 ## Architecture
 
@@ -405,7 +405,55 @@ lists every variable the app needs.
   forms; removing them needs `zod/mini`, which would mean rewriting every
   schema.
 
-### 11. Final UI/UX polish
+### 11. Final UI/UX polish (done)
 
-Full pass against the UI review checklist in `CLAUDE.md`, accessibility and
-Lighthouse targets.
+- Performance, measured with Lighthouse on a production build:
+  - Hotel cards start their photo carousel only when touched, hovered or
+    focused, so a page of cards hydrates without a dozen carousels measuring
+    the layout.
+  - The trending row is native scroll-snap instead of a JavaScript carousel.
+  - The calendar (react-day-picker) loads when a date picker first opens, and
+    the hotel map when the guest scrolls near it.
+  - Motion's animation features load in their own chunk. They are now
+    `domMax`, so the sliding tab chips and underlines (`layoutId`) really
+    animate.
+  - Sections below the fold and the footer use `content-visibility: auto`.
+  - `Reveal` no longer forces layouts while the page starts.
+  - Fraunces is loaded as two static weights, with the italic on demand,
+    instead of the 266 KB variable font.
+  - Hero photos use `preload` and `fetchPriority="high"`, a shared file for
+    the hotel page's two layouts, more image width steps and slightly
+    stronger compression.
+  - Catalogue reads (trending, destinations, suggestions, testimonials,
+    hotel metadata) are cached and invalidated by admin edits and reviews.
+  - The first search results no longer fade in from invisible.
+- Lighthouse results:
+  - Desktop: home 89 to 93, search 69 to 91, hotel 82 to 95, booking 96 to
+    97 for performance.
+  - Accessibility 100 on all four pages; best practices 100 (booking 96
+    before the Zod fix).
+  - SEO 100, except the booking page at 66, which is deliberately
+    `noindex`.
+  - Mobile performance 63 to 71 (from 44 to 49 at the start), with
+    accessibility, best practices and SEO as on desktop.
+  - Scores on this Windows machine vary by up to 30 points between identical
+    runs.
+- Accessibility fixes: list semantics in the trending row, a heading for the
+  search results, avatar initials at AA contrast, and avatars hidden from
+  screen readers where the button already names the person.
+- Removed `Cross-Origin-Opener-Policy` (it broke Lighthouse tracing and the
+  app opens no cross-origin windows) and `upgrade-insecure-requests` (HSTS
+  covers it); Zod runs jitless so the CSP never logs a violation.
+- Page metadata is rendered in the `<head>` for every client.
+- Page transitions: a short fade on navigation (not on first load);
+  reduced-motion users get none.
+- A "Demo mode" card on the payment step with the test card and a copy
+  button.
+- The README was rewritten: logo, pitch, live demo and demo account
+  placeholders, badges, features, how availability and double-booking
+  prevention work, tests, deployment and screenshot placeholders.
+- Not done: mobile Lighthouse performance is below 90. The remaining cost is
+  React and Next.js hydration (about 150 KB of the 275 KB of gzipped
+  JavaScript is the framework) under Lighthouse's 4x CPU and slow 4G
+  simulation. Reaching 90 would need far fewer client components, for
+  example rendering hotel cards and the header without client JavaScript.

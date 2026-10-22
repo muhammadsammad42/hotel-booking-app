@@ -51,11 +51,25 @@ function FitBounds({ pins, zoom }: { pins: MapPin[]; zoom: number }) {
 
   React.useEffect(() => {
     if (pins.length === 0) return;
-    if (pins.length === 1) {
-      map.setView([pins[0].latitude, pins[0].longitude], zoom);
-      return;
-    }
-    map.fitBounds(L.latLngBounds(pins.map((pin) => [pin.latitude, pin.longitude])), { padding: [48, 48], maxZoom: 9 });
+    const fit = () => {
+      if (pins.length === 1) map.setView([pins[0].latitude, pins[0].longitude], zoom);
+      else map.fitBounds(L.latLngBounds(pins.map((pin) => [pin.latitude, pin.longitude])), { padding: [48, 48], maxZoom: 9 });
+    };
+    fit();
+    // The map can be sized after it starts (a sticky panel settling, a sheet
+    // opening). Leaflet keeps its old centre then, so refit on resize.
+    let lastWidth = map.getContainer().clientWidth;
+    let lastHeight = map.getContainer().clientHeight;
+    const observer = new ResizeObserver(([entry]) => {
+      const { width, height } = entry.contentRect;
+      if (Math.abs(width - lastWidth) < 1 && Math.abs(height - lastHeight) < 1) return;
+      lastWidth = width;
+      lastHeight = height;
+      map.invalidateSize({ pan: false });
+      fit();
+    });
+    observer.observe(map.getContainer());
+    return () => observer.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refit only when the pins change
   }, [key, map, zoom]);
 

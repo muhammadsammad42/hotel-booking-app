@@ -1,17 +1,142 @@
-# Sarai
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="public/brand/sarai-logo-light.svg" />
+    <img src="public/brand/sarai-logo.svg" alt="Sarai" height="56" />
+  </picture>
+</p>
+
+<p align="center"><strong>Book remarkable hotels in minutes, from overwater villas to mountain lodges.</strong></p>
+
+<p align="center">
+  <a href="#">Live demo</a> ·
+  <a href="#demo-accounts">Demo accounts</a> ·
+  <a href="docs/PLAN.md">Architecture</a> ·
+  <a href="docs/DESIGN.md">Design system</a>
+</p>
+
+<p align="center">
+  <img alt="Next.js 16" src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white" />
+  <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white" />
+  <img alt="Prisma 7" src="https://img.shields.io/badge/Prisma-7-2D3748?logo=prisma&logoColor=white" />
+  <img alt="PostgreSQL on Neon" src="https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white" />
+  <img alt="Stripe Checkout" src="https://img.shields.io/badge/Stripe-Checkout-635BFF?logo=stripe&logoColor=white" />
+  <img alt="Auth.js v5" src="https://img.shields.io/badge/Auth.js-v5-EB5424" />
+  <img alt="Tested with Vitest and Playwright" src="https://img.shields.io/badge/tests-Vitest_%2B_Playwright-6E9F18?logo=vitest&logoColor=white" />
+</p>
 
 Sarai is a full-stack hotel booking marketplace in the style of Airbnb and
-Booking.com. Guests browse hotels around the world, check availability for
-their dates, and pay for their stay online. An admin manages every hotel,
-room type, rate and reservation.
+Booking.com. Guests search nine hotels around the world, see real
+availability and nightly prices for their dates, and pay with Stripe. An
+admin runs everything from a dashboard: hotels, room types, rates, blocked
+rooms and reservations.
 
-**Tech stack:** Next.js (App Router, TypeScript), Tailwind CSS, shadcn/ui
-(Radix), Motion, Prisma 7, PostgreSQL (Neon), Auth.js, Stripe Checkout, Zod,
-Vitest.
+> **Live demo:** _add your Vercel URL here_ · Payments run in Stripe test
+> mode, so no real money moves.
 
-The architecture and roadmap are in [docs/PLAN.md](docs/PLAN.md). The design
-system is documented in [docs/DESIGN.md](docs/DESIGN.md) and shown live at
-`/design` when the app is running.
+## Screenshots
+
+| Desktop | Phone |
+| --- | --- |
+| ![Home page on desktop](docs/screenshots/home-desktop.png) | ![Home page on a phone](docs/screenshots/home-mobile.png) |
+| ![Hotel page on desktop](docs/screenshots/hotel-desktop.png) | ![Booking on a phone](docs/screenshots/booking-mobile.png) |
+| ![Admin overview](docs/screenshots/admin-desktop.png) | ![My trips on a phone](docs/screenshots/trips-mobile.png) |
+
+![From search to confirmation](docs/screenshots/booking-flow.gif)
+
+_Placeholders: add the images to `docs/screenshots/`._
+
+## Demo accounts
+
+| Who | Email | Password |
+| --- | --- | --- |
+| Guest | `ayesha.khan@example.com` | _the `SEED_GUEST_PASSWORD` you set_ |
+| Admin | _your `SEED_ADMIN_EMAIL`_ | _your `SEED_ADMIN_PASSWORD`_ |
+
+Pay with the Stripe test card **4242 4242 4242 4242**, any future expiry
+date and any CVC. The card **4000 0000 0000 0002** is declined, to try the
+unhappy path. The payment page shows the test card while Stripe is in test
+mode.
+
+## Features
+
+**For guests**
+
+- Search by destination, dates and guests, with price, rating, class and
+  amenity filters, sorting, and a list and map view.
+- Hotel pages with a photo gallery, amenities, room types, reviews with
+  category scores, a map, and a calendar that shows each night's price,
+  cheaper dates and sold-out nights.
+- Booking in three steps: guest details, a 30-minute hold with a live
+  countdown, and Stripe Checkout. A confirmation page with the reference, a
+  calendar file and confetti.
+- My trips: a countdown to the next trip, upcoming, past and cancelled
+  stays, a printable receipt, free cancellation up to 48 hours before
+  check-in with an automatic refund, and reviews after a stay.
+- Wishlist with undo, and a profile with name, photo and password.
+- Light and dark themes, built for phones first, and accessible: keyboard
+  support, visible focus, screen reader labels and AA contrast.
+
+**For the admin**
+
+- An overview with revenue, bookings, occupancy and average daily rate
+  against last month, charts, and today's arrivals and departures with
+  one-click check-in and check-out.
+- Reservations with search, filters, sorting, a detail drawer, cancel with
+  refund, and CSV export.
+- Hotels and room types with photos (by URL, or uploads to Cloudinary),
+  amenities and visibility.
+- A rates calendar: drag across dates to set prices or block rooms in bulk.
+- An occupancy heatmap, and a command palette (Ctrl+K) to jump anywhere.
+
+**Under the hood**
+
+- Rate limits, a Content-Security-Policy and security headers, signed
+  Stripe webhooks, and role checks on the server for every action.
+- Optional booking emails through Resend.
+- Sitemap, robots.txt, canonical URLs and generated share images.
+- Unit tests for the booking engine and the rules around it, and end-to-end
+  tests in a real browser on desktop and phone sizes.
+
+## How it works
+
+```
+Browser ──► Next.js App Router (React Server Components, Server Actions)
+              │
+              ├─ Booking engine (pure functions: prices, availability, quotes)
+              ├─ Prisma 7 ──► PostgreSQL (Neon)
+              ├─ Auth.js (credentials, JWT sessions, GUEST and ADMIN roles)
+              └─ Stripe Checkout ──► webhook ──► confirm or refund
+```
+
+Pages are Server Components that read the database directly; interactive
+parts are small Client Components. Every change goes through a Server
+Action that validates its input with Zod and checks who is asking. The
+details are in [docs/PLAN.md](docs/PLAN.md).
+
+### Availability and double-booking prevention
+
+- **One source of truth.** A room type has a number of identical rooms. A
+  night's free rooms are that number, minus rooms blocked by the admin,
+  minus rooms held by bookings that are confirmed, checked in, or pending
+  and still inside their hold. The same pure functions in
+  `src/lib/booking/engine.ts` answer this for search, the hotel calendar
+  and the booking itself, and they are covered by unit tests.
+- **Prices are never trusted from the browser.** The server recalculates the
+  nightly rates, taxes and fee when the booking is made and stores that
+  snapshot.
+- **The last room cannot be sold twice.** Creating a booking runs in a
+  database transaction that first locks the room type row
+  (`SELECT ... FOR UPDATE`). Two guests reserving the last room at the same
+  moment are served one after the other: the second one re-checks
+  availability, sees the first one's hold and is told the room has just gone.
+- **Holds expire.** A new booking holds its rooms for 30 minutes while the
+  guest pays; the Stripe Checkout Session expires at the same moment. Lapsed
+  holds stop counting at once, and a cron job tidies the records.
+- **Payments are confirmed once.** The Stripe webhook and the success page
+  both confirm through the same idempotent function, so a duplicate or
+  late event changes nothing. A payment that arrives after its hold lapsed
+  is accepted if the rooms are still free and refunded automatically if not.
 
 ## Local setup
 

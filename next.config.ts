@@ -18,7 +18,6 @@ const contentSecurityPolicy = [
   "form-action 'self'",
   "base-uri 'self'",
   "object-src 'none'",
-  ...(isDev ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
 const securityHeaders = [
@@ -27,16 +26,22 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=()" },
-  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
   ...(isDev ? [] : [{ key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }]),
 ];
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Put page metadata in the <head> for every client, not only known bots,
+  // so link previews and audits always see the title and description. The
+  // hotel metadata query is cached, so this costs a few milliseconds.
+  htmlLimitedBots: /.*/,
   images: {
     // Hotel and room photos are resized by the Unsplash CDN, not by Next.js.
     loader: "custom",
     loaderFile: "./src/lib/image-loader.ts",
+    // Extra steps between 1200 and 1920, so a full-width photo on a laptop
+    // is not fetched at 1920px.
+    deviceSizes: [640, 750, 828, 1080, 1200, 1440, 1600, 1920, 2048, 3840],
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

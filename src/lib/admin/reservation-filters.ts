@@ -1,5 +1,5 @@
 // Reservation filters (from the URL) and CSV encoding. Pure: no database access.
-import { z } from "zod";
+import { z } from "@/lib/validation/zod";
 
 import type { Prisma } from "@/generated/prisma/client";
 import { isIsoDate, toUtcDate } from "@/lib/booking/stay";

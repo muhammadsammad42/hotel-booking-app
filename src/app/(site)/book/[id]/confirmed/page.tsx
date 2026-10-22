@@ -133,7 +133,7 @@ export default async function ConfirmedPage({ params, searchParams }: PageProps<
 
             <section aria-labelledby="trip-heading" className="overflow-hidden rounded-2xl border bg-card">
               <div className="relative aspect-21/9 bg-muted">
-                <Image src={hotel.coverImageUrl} alt={hotel.coverImageAlt} fill priority sizes="(min-width: 1024px) 640px, 100vw" className="object-cover" />
+                <Image src={hotel.coverImageUrl} alt={hotel.coverImageAlt} fill preload fetchPriority="high" sizes="(min-width: 1024px) 640px, 100vw" className="object-cover" />
               </div>
               <div className="grid gap-4 p-5 sm:p-6">
                 <h2 id="trip-heading" className="type-title-md">

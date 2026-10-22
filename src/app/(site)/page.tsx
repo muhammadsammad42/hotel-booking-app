@@ -61,7 +61,10 @@ export default async function Home() {
             src="https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=1600&q=80"
             alt="Overwater villas on stilts in a clear turquoise lagoon"
             fill
-            priority
+            preload
+            fetchPriority="high"
+            // Full-width hero: a little more compression keeps it light on every screen.
+            quality={55}
             sizes="100vw"
             className="-z-10 object-cover"
           />
@@ -100,7 +103,7 @@ export default async function Home() {
         </PageContainer>
       </Section>
 
-      <Section aria-labelledby="destinations-heading" className="bg-muted/50">
+      <Section deferred aria-labelledby="destinations-heading" className="bg-muted/50">
         <PageContainer>
           <Reveal className="flex flex-wrap items-end justify-between gap-4">
             <div>
@@ -128,7 +131,7 @@ export default async function Home() {
         </PageContainer>
       </Section>
 
-      <Section aria-labelledby="why-heading">
+      <Section deferred aria-labelledby="why-heading">
         <PageContainer>
           <Reveal className="max-w-2xl">
             <p className="type-eyebrow text-primary">Why Sarai</p>
@@ -153,7 +156,7 @@ export default async function Home() {
       </Section>
 
       {testimonials.length > 0 && (
-        <Section aria-labelledby="reviews-heading" className="border-y bg-card">
+        <Section deferred aria-labelledby="reviews-heading" className="border-y bg-card">
           <PageContainer>
             <Reveal className="max-w-2xl">
               <p className="type-eyebrow text-primary">From our guests</p>
@@ -192,7 +195,7 @@ export default async function Home() {
         </Section>
       )}
 
-      <Section aria-labelledby="cta-heading">
+      <Section deferred aria-labelledby="cta-heading">
         <PageContainer>
           <Reveal>
             <div className="relative isolate overflow-hidden rounded-3xl bg-muted px-6 py-16 text-center text-lightbox-foreground sm:px-12 md:py-24">

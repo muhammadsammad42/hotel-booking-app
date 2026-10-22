@@ -18,6 +18,7 @@ export default function imageLoader({ src, width, quality }: LoaderParams) {
   url.searchParams.set("auto", "format");
   url.searchParams.set("fit", "crop");
   url.searchParams.set("w", String(width));
-  url.searchParams.set("q", String(quality ?? 75));
+  // 65 is visually lossless for these photos in AVIF and WebP, and lighter.
+  url.searchParams.set("q", String(quality ?? 65));
   return url.toString();
 }

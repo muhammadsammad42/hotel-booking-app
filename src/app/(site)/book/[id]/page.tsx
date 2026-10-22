@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CreditCardIcon, LockIcon, RotateCwIcon, TimerOffIcon } from "lucide-react";
 
+import { CopyButton } from "@/components/booking/copy-button";
 import { HoldCountdown } from "@/components/booking/hold-countdown";
 import { BookingSteps, StaySummary } from "@/components/booking/stay-summary";
 import { PageContainer, Section } from "@/components/layout/page-container";
@@ -81,13 +82,26 @@ export default async function PaymentPage({ params }: PageProps<"/book/[id]">) {
                 </div>
               )}
               {testMode && (
-                <p className="flex items-start gap-2.5 rounded-xl bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
-                  <CreditCardIcon className="mt-0.5 size-4 shrink-0" aria-hidden />
-                  <span>
-                    Test mode: pay with card <span className="font-mono text-foreground">4242 4242 4242 4242</span>, any
-                    future expiry date and any CVC. No real money moves.
-                  </span>
-                </p>
+                <aside aria-label="Demo mode" className="grid gap-3 rounded-xl border border-dashed border-brass/70 bg-brass/8 px-4 py-3.5 text-sm">
+                  <p className="flex items-center gap-2 font-semibold">
+                    <CreditCardIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                    Demo mode
+                    <span className="font-normal text-muted-foreground">· no real money moves</span>
+                  </p>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <dl className="grid gap-0.5 text-muted-foreground">
+                      <div className="flex gap-2">
+                        <dt className="sr-only">Card number</dt>
+                        <dd className="font-mono text-base tracking-wider text-foreground">4242 4242 4242 4242</dd>
+                      </div>
+                      <div className="flex gap-2">
+                        <dt className="sr-only">Expiry and CVC</dt>
+                        <dd>Any future expiry date and any CVC</dd>
+                      </div>
+                    </dl>
+                    <CopyButton value="4242424242424242" label="Copy the test card number" />
+                  </div>
+                </aside>
               )}
               <p className="text-sm text-muted-foreground">
                 Need to change something?{" "}

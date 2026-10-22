@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/validation/zod";
 
 export const PASSWORD_MIN_LENGTH = 8;
 // bcrypt ignores everything after 72 bytes.

@@ -18,13 +18,13 @@ import { RatingStars } from "@/components/ui/rating-stars";
 import { getCurrentUser } from "@/lib/auth/guards";
 import { getRoomCalendars } from "@/lib/booking/data";
 import { todayIso, validateStay } from "@/lib/booking/stay";
-import { getHotelBySlug } from "@/lib/catalog/hotels";
+import { getHotelBySlug, getHotelMeta } from "@/lib/catalog/hotels";
 import { parseSearchParams } from "@/lib/search/params";
 import { getWishlistIds } from "@/lib/wishlist/queries";
 
 export async function generateMetadata({ params }: PageProps<"/hotels/[slug]">): Promise<Metadata> {
   const { slug } = await params;
-  const hotel = await getHotelBySlug(slug);
+  const hotel = await getHotelMeta(slug);
   if (!hotel) return { title: "Hotel not found" };
   const description = hotel.description.split("\n")[0].slice(0, 160);
   return {
@@ -149,7 +149,7 @@ export default async function HotelPage({ params, searchParams }: PageProps<"/ho
                 <ReadMore text={hotel.description} />
               </section>
 
-              <section aria-labelledby="amenities-heading" className="grid gap-6 border-t pt-10">
+              <section aria-labelledby="amenities-heading" className="content-auto grid gap-6 border-t pt-10">
                 <SectionHeading id="amenities-heading">What this place offers</SectionHeading>
                 <AmenityList amenities={hotel.amenities} hotelName={hotel.name} />
               </section>
@@ -165,12 +165,12 @@ export default async function HotelPage({ params, searchParams }: PageProps<"/ho
                 </ul>
               </section>
 
-              <section id="reviews" aria-labelledby="reviews-heading" className="grid scroll-mt-28 gap-6 border-t pt-10">
+              <section id="reviews" aria-labelledby="reviews-heading" className="content-auto grid scroll-mt-28 gap-6 border-t pt-10">
                 <SectionHeading id="reviews-heading">Guest reviews</SectionHeading>
                 <ReviewsSection hotel={hotel} />
               </section>
 
-              <section aria-labelledby="location-heading" className="grid gap-5 border-t pt-10 pb-4">
+              <section aria-labelledby="location-heading" className="content-auto grid gap-5 border-t pt-10 pb-4">
                 <SectionHeading id="location-heading">Where you will be</SectionHeading>
                 <p className="text-muted-foreground">{hotel.address}</p>
                 <LocationMap id={hotel.id} name={hotel.name} latitude={hotel.latitude} longitude={hotel.longitude} />

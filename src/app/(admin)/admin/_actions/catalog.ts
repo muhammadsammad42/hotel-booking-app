@@ -1,9 +1,10 @@
 "use server";
 
 import { createHash } from "node:crypto";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 
 import { getAdmin, NOT_ADMIN } from "@/lib/admin/guard";
+import { CATALOG_TAG } from "@/lib/catalog/hotels";
 import { prisma } from "@/lib/prisma";
 import { idSchema } from "@/lib/validation/account";
 import {
@@ -25,6 +26,7 @@ type Result = { ok: true; message: string } | { ok: false; formError: string };
 
 /** Revalidates the public pages that show catalogue data. */
 function refreshCatalogue(slug?: string) {
+  updateTag(CATALOG_TAG);
   revalidatePath("/admin", "layout");
   revalidatePath("/");
   revalidatePath("/search");

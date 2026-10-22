@@ -5,56 +5,17 @@ import { addDays, format } from "date-fns";
 import type { DayButton } from "react-day-picker";
 
 import { useHotelBooking } from "@/components/hotel/booking-context";
-import { CalendarDayButton } from "@/components/ui/calendar";
+import { DayInfoContext, shortPrice, type DayInfo } from "@/components/hotel/day-info";
 import { DateRangePicker, type DateRange } from "@/components/ui/date-range-picker";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { BOOKING_CONFIG } from "@/lib/booking/config";
 import type { RoomCalendar } from "@/lib/booking/engine";
 import { toIsoDate } from "@/lib/dates";
-import { cn } from "@/lib/utils";
 
-type DayInfo = { price: number; available: number; cheap: boolean };
+// The day cells load with the calendar, when the picker first opens.
+const LazyPricedDayButton = React.lazy(() => import("@/components/hotel/priced-day-button"));
 
-const DayInfoContext = React.createContext<(date: Date) => DayInfo | undefined>(() => undefined);
-
-/** "$420", or "$1.1k" so long prices fit in a day cell. */
-function shortPrice(cents: number) {
-  const dollars = Math.round(cents / 100);
-  return dollars >= 1000 ? `$${(dollars / 1000).toFixed(1).replace(/\.0$/, "")}k` : `$${dollars}`;
-}
-
-/** A day with its nightly price underneath; sold-out days explain themselves. */
 function PricedDayButton(props: React.ComponentProps<typeof DayButton>) {
-  const info = React.useContext(DayInfoContext)(props.day.date);
-  const soldOut = info !== undefined && info.available === 0;
-  const past = props.modifiers.disabled;
-
-  const button = (
-    <CalendarDayButton
-      {...props}
-      data-sold-out={soldOut || undefined}
-      className={cn(
-        "flex-col gap-0.5 leading-none data-today:after:hidden",
-        soldOut && "text-muted-foreground/60 [&>span:first-child]:line-through",
-        info?.cheap && !soldOut && !props.modifiers.selected && "[&>span:last-child]:text-success",
-      )}
-    >
-      <span>{props.day.date.getDate()}</span>
-      {info && !past && (
-        <span className="text-xs font-medium tabular-nums opacity-80" aria-hidden>
-          {soldOut ? "—" : shortPrice(info.price)}
-        </span>
-      )}
-    </CalendarDayButton>
-  );
-
-  if (!soldOut || past) return button;
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>{button}</TooltipTrigger>
-      <TooltipContent>Sold out that night</TooltipContent>
-    </Tooltip>
-  );
+  return <LazyPricedDayButton {...props} />;
 }
 
 function lookup(calendar: RoomCalendar | undefined) {

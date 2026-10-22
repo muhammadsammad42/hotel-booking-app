@@ -8,14 +8,24 @@ import { THEME_SCRIPT } from "@/lib/theme";
 
 import "./globals.css";
 
-// Display serif for editorial headlines. SOFT and WONK are Fraunces axes
-// used by the type scale in globals.css.
+// Display serif for editorial headlines, as two static weights: much lighter
+// than the variable font, so the hero photo is not kept waiting.
 const fraunces = Fraunces({
   variable: "--font-fraunces",
   subsets: ["latin"],
-  style: ["normal", "italic"],
-  axes: ["SOFT", "WONK", "opsz"],
+  weight: ["400", "500"],
   display: "swap",
+});
+
+// The italic is used for one emphasised phrase per heading, so it is not
+// preloaded; it arrives just after the page and swaps in.
+const frauncesItalic = Fraunces({
+  variable: "--font-fraunces-italic",
+  subsets: ["latin"],
+  weight: "400",
+  style: "italic",
+  display: "swap",
+  preload: false,
 });
 
 // Interface and body text.
@@ -48,7 +58,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${fraunces.variable} ${instrumentSans.variable} h-full antialiased`}
+      className={`${fraunces.variable} ${frauncesItalic.variable} ${instrumentSans.variable} h-full antialiased`}
       // THEME_SCRIPT sets the theme class before hydration.
       suppressHydrationWarning
     >

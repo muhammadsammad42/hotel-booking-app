@@ -22,11 +22,22 @@ export function Reveal({ children, delay = 0, className }: RevealProps) {
 
   React.useEffect(() => {
     const element = ref.current;
-    if (!element || element.getBoundingClientRect().top < window.innerHeight) return;
-
-    element.dataset.reveal = "hidden";
+    if (!element) return;
+    // The observer reports positions asynchronously, so nothing here forces
+    // a layout while the page is starting. Its first report says whether the
+    // element starts below the fold; only then is it hidden, to fade in later.
+    let first = true;
     const observer = new IntersectionObserver(
       ([entry]) => {
+        if (first) {
+          first = false;
+          if (entry.isIntersecting || entry.boundingClientRect.top < 0) {
+            observer.disconnect();
+            return;
+          }
+          element.dataset.reveal = "hidden";
+          return;
+        }
         if (!entry.isIntersecting) return;
         element.dataset.reveal = "shown";
         observer.disconnect();

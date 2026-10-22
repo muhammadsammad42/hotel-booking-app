@@ -168,7 +168,7 @@ export function AvatarForm({ name, email, image }: { name: string | null; email:
         >
           <Avatar className={cn("size-24 transition-opacity duration-150 ease-soft", pending && "opacity-60")}>
             {shown && <AvatarImage src={shown} alt="" />}
-            <AvatarFallback className="bg-primary/15 text-2xl font-semibold text-primary">{initials(name, email)}</AvatarFallback>
+            <AvatarFallback className="bg-primary/15 text-2xl font-semibold text-foreground">{initials(name, email)}</AvatarFallback>
           </Avatar>
           <span className="absolute right-0 bottom-0 flex size-8 items-center justify-center rounded-full border-2 border-card bg-primary text-primary-foreground transition-transform duration-150 ease-soft group-hover/avatar-edit:scale-110">
             <CameraIcon className="size-4" aria-hidden />

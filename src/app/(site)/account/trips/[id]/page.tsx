@@ -118,7 +118,7 @@ export default async function TripPage({ params }: PageProps<"/account/trips/[id
 
         <header className="grid gap-5">
           <div className="relative aspect-16/9 overflow-hidden rounded-2xl bg-muted sm:aspect-21/9">
-            <Image src={hotel.coverImageUrl} alt={hotel.coverImageAlt} fill priority sizes="(min-width: 1024px) 1024px, 100vw" className="object-cover" />
+            <Image src={hotel.coverImageUrl} alt={hotel.coverImageAlt} fill preload fetchPriority="high" sizes="(min-width: 1024px) 1024px, 100vw" className="object-cover" />
           </div>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0">

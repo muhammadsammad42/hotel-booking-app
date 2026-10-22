@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "@/lib/validation/zod";
 
 import { BOOKING_CONFIG } from "@/lib/booking/config";
 import { isIsoDate } from "@/lib/booking/stay";
